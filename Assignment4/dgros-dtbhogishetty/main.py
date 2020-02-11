@@ -43,6 +43,7 @@ app.layout = html.Div([
     ],style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'},id='pokemon-stats'),
 ])
 
+
 @app.callback(
     Output('pokemon-stats','children'),
     [Input('pokemon-scatter','clickData')])
@@ -57,6 +58,7 @@ def display_click_data(clickData):
     #temp = df.iloc[row].to_frame()
     fig = px.bar(x=bar_x,y=bar_y)
     return dcc.Graph(figure=fig)
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

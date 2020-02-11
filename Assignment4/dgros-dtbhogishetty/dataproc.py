@@ -1,6 +1,10 @@
-from typing import List
+from typing import List, Sequence
 
 import pandas as pd
+from pandas import DataFrame
+from sklearn import preprocessing
+
+from data_constants import feats_numeric, feats_ordinal, feats_categorical, feats_bool, feats_all
 
 
 def load_data():
@@ -10,27 +14,44 @@ def load_data():
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder, MinMaxScaler
 
 
-numeric_features = ['Salary']
-numeric_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler())])
+def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize: bool = False):
+    if accepted_cols:
+        assert all([feat in feats_all for feat in accepted_cols])
 
-categorical_features = ['Age','Country']
-categorical_transformer = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+    def filter_feats(feats: Sequence[str]):
+        if accepted_cols is None:
+            return feats
+        return [feat for feat in feats if feat in accepted_cols]
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)])
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='mean')),
+        ('scaler', StandardScaler())])
 
-def vectorize_examples(accepted_cols: List[str]):
-    #convert_to_onehot =
-    pass
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+    bool_transformer = Pipeline(steps=[
+        ('encoder', MinMaxScaler())]
+    )
+
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, filter_feats(feats_numeric + feats_ordinal)),
+            ('cat', categorical_transformer, filter_feats(feats_categorical)),
+            ('bool', bool_transformer, filter_feats(feats_bool))
+        ]
+    )
+    preprocessor.fit_transform(df)
+    vecs = preprocessor.transform(df)
+    if normalize:
+        vecs = preprocessing.normalize(vecs)
+    return vecs
+
 
 if __name__ == "__main__":
     # Make sure we can load the data [DONE]
@@ -49,4 +70,12 @@ if __name__ == "__main__":
     #   Draw the sankey
     #   Extra interaction??
     # (Optional) figure out picture in table
-    print(load_data())
+    df = load_data()
+    #subdf = df
+    #sub_fields = ['HP', 'Type_1', 'hasGender', 'Height_m']
+    #print(subdf[sub_fields])
+    vectroized = vectorize_examples(df, None)
+    print(vectroized)
+    print(vectroized.shape)
+
+
