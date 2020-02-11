@@ -1,5 +1,7 @@
 from typing import List, Sequence
 import pandas as pd
+import sklearn
+import sklearn.manifold
 from pandas import DataFrame
 from sklearn import preprocessing
 from data_constants import feats_numeric, feats_ordinal, feats_categorical, feats_bool, feats_all
@@ -54,6 +56,12 @@ def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize
     return vecs
 
 
+def run_tsne(features):
+    tsne = sklearn.manifold.TSNE(n_components=2)
+    tsne.fit_transform(features)
+    return tsne.embedding_
+
+
 if __name__ == "__main__":
     # Make sure we can load the data [DONE]
     # Hello dash [DONE]
@@ -71,6 +79,7 @@ if __name__ == "__main__":
     #   Draw the sankey
     #   Extra interaction??
     # (Optional) figure out picture in table
+
     df = load_data()
     #subdf = df
     #sub_fields = ['HP', 'Type_1', 'hasGender', 'Height_m']
@@ -78,5 +87,8 @@ if __name__ == "__main__":
     vectroized = vectorize_examples(df, None)
     print(vectroized)
     print(vectroized.shape)
+    print("RUN tsne")
+    tsne = run_tsne(vectroized)
+    print(tsne)
 
 
