@@ -1,23 +1,25 @@
 from typing import List, Sequence
-
 import pandas as pd
 from pandas import DataFrame
 from sklearn import preprocessing
-
 from data_constants import feats_numeric, feats_ordinal, feats_categorical, feats_bool, feats_all
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 
 
 def load_data():
     return pd.read_csv("./data/pokemon_alopez247.csv")
 
 
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder, MinMaxScaler
-
-
 def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize: bool = False):
+    """Converts the pokemon dataset to feature vectors
+
+    :arg df: The data from our pokemon dataset
+    :arg accepted_cols: if provided, only these columns will be considered
+    :arg normalize: If true will output feature vectors scaled to be unitnorm
+    """
     if accepted_cols:
         assert all([feat in feats_all for feat in accepted_cols])
 
@@ -55,9 +57,9 @@ def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize
 
 if __name__ == "__main__":
     # Make sure we can load the data [DONE]
-    # Hello dash
+    # Hello dash [DONE]
     # Dim reduction
-    #   Map the pokemon to a vector
+    #   Map the pokemon to a vector [DONE]
     #   Run dim reduction
     #   Show in dash
     #   Paramertized dim reduction
