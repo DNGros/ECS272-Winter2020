@@ -40,7 +40,6 @@ def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize
         ('encoder', MinMaxScaler())]
     )
 
-
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', numeric_transformer, filter_feats(feats_numeric + feats_ordinal)),
