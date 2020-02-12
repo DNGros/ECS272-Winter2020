@@ -6,6 +6,7 @@ from dataproc import load_data
 if __name__ == "__main__":
     df = load_data()
     print(df.columns)
+    print(set(list(df['Body_Style'])))
     for col in df.columns:
         print(col)
         print("NUM UNIQUE", df[col].nunique(dropna=False))
