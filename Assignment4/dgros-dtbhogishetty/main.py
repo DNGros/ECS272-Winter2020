@@ -67,17 +67,28 @@ def build_scatter(highlight_stat: str):
             relevant_colors = feat_colors[highlight_stat]
             return [relevant_colors[str(v)] for v in vals]
 
-    fig = go.Figure(data=go.Scatter(
-        x=tsne[:, 0],
-        y=tsne[:, 1],
-        mode='markers',
-        text=df['Name'],
-        hoverinfo='text',
-        marker={
-            "color": build_color(df[highlight_stat])
-        },
-        customdata=df['Name']
-    ))
+    text = [
+        f"{name} --- {highlight_val}"
+        for name, highlight_val in zip(df['Name'], df[highlight_stat])
+    ]
+
+    fig = go.Figure(
+        data=go.Scatter(
+            x=tsne[:, 0],
+            y=tsne[:, 1],
+            mode='markers',
+            text=text,
+            hoverinfo='text',
+            marker={
+                "color": build_color(df[highlight_stat]),
+                "colorscale": "PuBu"
+            },
+            customdata=df['Name']
+        ),
+        layout=go.Layout(
+
+        )
+    )
     return fig
 
 
