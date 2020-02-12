@@ -81,4 +81,10 @@ feat_colors = {
     }
 }
 
+bool_colors = {
+    True: "green",
+    False: "red"
+}
+
+
 feats_all = feats_categorical + feats_ordinal + feats_bool + feats_numeric
