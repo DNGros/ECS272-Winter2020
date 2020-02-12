@@ -46,10 +46,10 @@ def build_layout():
             dcc.Graph(
                 id='pokemon-scatter'
             )
-        ]),#,style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
+        ],style={'width': '60%', 'display': 'inline-block', 'padding': '0 20'}),
         html.Div([
             html.Div()
-        ], id='pokemon-stats'),#,style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'},id='pokemon-stats'),
+        ], id='pokemon-stats',style={'width': '40%', 'display': 'inline-block', 'padding': '0 20'}),
     ])
 
 app.layout = build_layout()
@@ -81,21 +81,15 @@ def build_scatter(highlight_stat: str):
 
 @app.callback(
 Output('pokemon-stats', 'children'),
-[Input('pokemon-scatter', 'clickData')])
-def display_click_data(clickData):
+[Input('pokemon-scatter', 'clickData'),Input('highlight-stat-dropdown','value')])
+def display_click_data(clickData,val):
     #using this to get index of the point
     if clickData is None:
         raise PreventUpdate
     name = clickData['points'][0]['customdata']
     ddf = df[df['Name'] == name]
-<<<<<<< HEAD
-    bar_x = ['Health Points','Attack','Defense','Special Attack','Special Defence','Speed']
-    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(ddf['Sp_Def']).append(ddf['Speed'])
-=======
-    bar_x = ['Health Points', 'Attack', 'Defense', 'Special Attack', 'Special Defence', 'Speed']
-    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(
-        ddf['Sp_Def']).append(ddf['Speed'])
->>>>>>> 6ba02fae4aca94881e33a676ec558fd87cb16df7
+    bar_x = [val]
+    bar_y = ddf[val]
     fig = px.bar(x=bar_x, y=bar_y)
     return dcc.Graph(figure=fig)
 
