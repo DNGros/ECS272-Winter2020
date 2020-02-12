@@ -33,7 +33,7 @@ def build_highlight_stat_dropdown():
 
 
 def build_layout():
-    ## TODO: get data from dim reduction into a data frame. customdata will the the 'name' column of database. put bar_x = column names and bar_y = stat values
+    ## TODO: put bar_x = column names and bar_y = stat values
     return html.Div([
         html.Div([
             html.H1("Exploring Pokémon Data")
@@ -73,28 +73,10 @@ def build_scatter(highlight_stat: str):
         hoverinfo='text',
         marker={
             "color": build_color(df[highlight_stat])
-        }
+        },
+        customdata=df['Name']
     ))
     return fig
-    figure = {
-        'data': [
-            {
-                'x': tsne[:, 0],
-                'y': tsne[:, 1],
-                'customdata': df['Name'],
-                'mode': 'markers',
-                'type': 'scatter',
-                # 'marker': {'size': 12},
-                'text': df['Name'],
-                'hoverinfo': 'text',
-                'color': df["HP"]
-            }
-        ],
-        'layout': {
-            'clickmode': 'event+select'
-        }
-    }
-    return figure
 
 
 @app.callback(
@@ -106,8 +88,9 @@ def display_click_data(clickData):
         raise PreventUpdate
     name = clickData['points'][0]['customdata']
     ddf = df[df['Name'] == name]
-    bar_x = ['c', 'd']
-    bar_y = ddf['c'].append(ddf['e'])
+    bar_x = ['Health Points', 'Attack', 'Defense', 'Special Attack', 'Special Defence', 'Speed']
+    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(
+        ddf['Sp_Def']).append(ddf['Speed'])
     fig = px.bar(x=bar_x, y=bar_y)
     return dcc.Graph(figure=fig)
 
