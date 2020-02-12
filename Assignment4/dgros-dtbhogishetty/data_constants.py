@@ -6,4 +6,31 @@ feats_numeric = ['Total', 'HP', 'Attack', 'Defense', 'Sp_Atk', 'Sp_Def',
 feats_ordinal = ['Generation']
 feats_bool = ['isLegendary', 'hasGender', 'hasMegaEvolution']
 
-feats_all = feats_textual + feats_categorical + feats_ordinal + feats_bool + feats_numeric
+type_colors = {
+    "Grass": "lightgreen",
+    "Fire": "red",
+    "Water": "darkblue",
+    "Bug": "darkgreen",
+    "Normal": "darkcyan",
+    "Poison": "purple",
+    "Electric": "yellow",
+    "Ground": "burlywood",
+    "Fairy": "fuchsia",
+    "Fighting": "orange",
+    "Psychic": "pink",
+    "Rock": "brown",
+    "Ghost": "blue",
+    "Ice": "lightblue",
+    "Dragon": "cyan",
+    "Dark": "black",
+    "Steel": "grey",
+    "Flying": "turquoise",
+    "nan": "ivory"
+}
+
+feat_colors = {
+    "Type_1": type_colors,
+    "Type_2": type_colors
+}
+
+feats_all = feats_categorical + feats_ordinal + feats_bool + feats_numeric

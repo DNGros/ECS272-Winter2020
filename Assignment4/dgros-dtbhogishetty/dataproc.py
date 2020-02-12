@@ -57,7 +57,7 @@ def vectorize_examples(df: DataFrame, accepted_cols: List[str] = None, normalize
 
 
 def run_tsne(features):
-    tsne = sklearn.manifold.TSNE(n_components=2)
+    tsne = sklearn.manifold.TSNE(n_components=2, random_state=42)
     tsne.fit_transform(features)
     return tsne.embedding_
 
@@ -67,8 +67,8 @@ if __name__ == "__main__":
     # Hello dash [DONE]
     # Dim reduction
     #   Map the pokemon to a vector [DONE]
-    #   Run dim reduction
-    #   Show in dash
+    #   Run dim reduction [DONE]
+    #   Show in dash [DONE]
     #   Paramertized dim reduction
     #       Show the multi selection
     #       Redo dim reduction when changing the parameters
