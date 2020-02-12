@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 
 from pandas import DataFrame
 
-from data_constants import feats_all, feats_numeric, feats_ordinal, feat_colors
+from data_constants import feats_all, feats_numeric, feats_ordinal, feat_colors, feats_bool, bool_colors
 from dataproc import load_data, vectorize_examples, run_tsne
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -61,6 +61,8 @@ def build_scatter(highlight_stat: str):
     def build_color(vals):
         if highlight_stat in feats_numeric + feats_ordinal:
             return vals
+        elif highlight_stat in feats_bool:
+            return [bool_colors[v] for v in vals]
         else:
             relevant_colors = feat_colors[highlight_stat]
             return [relevant_colors[str(v)] for v in vals]
