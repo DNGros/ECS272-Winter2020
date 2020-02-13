@@ -103,16 +103,16 @@ def build_scatter(highlight_stat: str):
 
 @app.callback(
 Output('pokemon-stats', 'children'),
-[Input('pokemon-scatter', 'clickData'),Input('highlight-stat-dropdown','value')])
-def display_click_data(clickData,val):
+[Input('pokemon-scatter', 'clickData')])
+def display_click_data(clickData):
     #using this to get index of the point
     if clickData is None:
         raise PreventUpdate
     name = clickData['points'][0]['customdata']
     ddf = df[df['Name'] == name]
-    bar_x = [val]
-    bar_y = ddf[val]
-    fig = px.bar(x=bar_x, y=bar_y)
+    bar_x = ['HP','Normal Attack','Normal Defense','Special Attack','Special Defence','Speed']
+    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(ddf['Sp_Def']).append(ddf['Speed'])
+    fig = px.bar(x=bar_x, y=bar_y,labels={'x':'Pokemon Stats','y':'Value'})
     return dcc.Graph(figure=fig)
 
 
