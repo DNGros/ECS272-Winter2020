@@ -31,9 +31,12 @@ def build_highlight_stat_dropdown():
         value="Type_1"
     )
 
+def build_sankey():
+    sankey_df = df[['Type_1','Body_Style']]
+    fig = px.parallel_categories(sankey_df)
+    return fig
 
 def build_layout():
-    ## TODO: put bar_x = column names and bar_y = stat values
     return html.Div([
         html.Div([
             html.H1("Exploring Pokémon Data")
@@ -50,6 +53,12 @@ def build_layout():
         html.Div([
             html.Div()
         ], id='pokemon-stats',style={'width': '40%', 'display': 'inline-block', 'padding': '0 20'}),
+        html.Div([
+            dcc.Graph(
+                id='pokemon-sankey',
+                figure = build_sankey()
+            )
+        ])
     ])
 
 app.layout = build_layout()
