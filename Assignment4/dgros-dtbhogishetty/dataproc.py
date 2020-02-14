@@ -72,8 +72,8 @@ if __name__ == "__main__":
     #   Paramertized dim reduction
     #       Show the multi selection
     #       Redo dim reduction when changing the parameters
-    # Show stats bar graph
-    # Figure out how to link stats bargraph and scatter plot of dim reduction
+    # Show stats bar graph [DONE]
+    # Figure out how to link stats bargraph and scatter plot of dim reduction [DONE]
     # Be able to show table of things in given filter
     # Sankey
     #   Draw the sankey
