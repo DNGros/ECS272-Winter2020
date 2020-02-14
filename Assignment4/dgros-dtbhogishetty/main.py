@@ -25,6 +25,8 @@ cache = setup_cache(app)
 id_dimreduct_feats = "dimreduct-feats"
 ###
 
+sankey_feats = ['Body_Style', 'Type_1', 'Egg_Group_1']
+
 
 def build_highlight_stat_dropdown():
     return dcc.Dropdown(
@@ -57,14 +59,15 @@ def build_layout():
         ], style={'text-align': 'center'}),
         html.Div([
             html.Div([
+                html.H4("T-SNE Dimensionality Reduction"),
                 html.Div([
-                    html.Label("Dimensionality Reduction Features:"),
+                    html.Label("Dimensionality Reduction Features (what features we consider):"),
                     build_dim_reduction_feats_selector(),
                     html.Plaintext(
                         'Note, that updates to these inputs reruns the dimensionality'
                         'reduction and can take significant time.'
                     ),
-                    html.Label("Highlight Feature:"),
+                    html.Label("Marker Color Feature:"),
                     build_highlight_stat_dropdown(),
                 ]),
                 dcc.Loading(dcc.Graph(
@@ -88,6 +91,10 @@ def build_layout():
                     dcc.Graph(
                         id='pokemon-sankey',
                         style={"width": "35vw", "height": "50%"}
+                    ),
+                    html.Plaintext(
+                        f"Parallel Coordinates Sankey showing {', '.join(sankey_feats)}",
+                        style={"margin": "auto", "width": "100%", "text-align": "center"}
                     )
                 ], style={"display": 'inline-block'}),
             ], style={'flex': '0 0 40%', "margin": "auto"}),
@@ -144,7 +151,8 @@ def build_scatter(highlight_stat: str, dimreduct_feats: List[str]):
             customdata=df['Name']
         ),
         layout=go.Layout(
-
+            autosize=True,
+            margin=dict(l=0, r=0, t=10, b=0)
         )
     )
     return fig
@@ -168,7 +176,7 @@ def build_sankey(clickData):
     else:
         highlight_node = None
 
-    return {"data": [make_sankey(df, ['Body_Style', 'Type_1'], highlight_node)]}
+    return {"data": [make_sankey(df, sankey_feats, highlight_node)]}
 
 
 @app.callback(
