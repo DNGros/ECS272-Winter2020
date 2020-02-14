@@ -191,7 +191,7 @@ def build_sankey(clickData):
     return {
         "data": [make_sankey(df, sankey_feats, highlight_node)],
         "layout": go.Layout(
-            margin=dict(l=45, r=5, t=10, b=5),
+            margin=dict(l=45, r=5, t=10, b=20),
         )
     }
 

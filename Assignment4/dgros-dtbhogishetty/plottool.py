@@ -24,7 +24,7 @@ def make_sankey(
             label = make_label_for_val(field, val)
             node_labels.append(label)
             if should_highlight_node is None or not should_highlight_node(field, val):
-                node_colors.append("grey")
+                node_colors.append("#DDD")
             else:
                 node_colors.append(feat_colors[field][val])
 
@@ -56,7 +56,10 @@ def make_sankey(
     return go.Sankey(
         node=dict(
             label=node_labels,
-            color=node_colors
+            color=node_colors,
+            line=dict(
+                width=1
+            )
         ),
         link=dict(
             source=link_srcs,
