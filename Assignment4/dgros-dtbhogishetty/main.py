@@ -56,28 +56,40 @@ def build_layout():
             html.H1("Exploring Pokémon Data")
         ], style={'text-align': 'center'}),
         html.Div([
-            html.Label("Dimensionality Reduction Features:"),
-            build_dim_reduction_feats_selector(),
-            html.Plaintext(
-                'Note, that updates to these inputs reruns the dimensionality'
-                'reduction and can take significant time.'
-            ),
-            html.Label("Highlight Feature:"),
-            build_highlight_stat_dropdown(),
-        ]),
-        html.Div([
-            dcc.Loading(dcc.Graph(
-                id='pokemon-scatter'
-            ))
-        ],style={'width': '60%', 'display': 'inline-block', 'padding': '0 20'}),
-        html.Div([
-            html.Div()
-        ], id='pokemon-stats',style={'width': '40%', 'display': 'inline-block', 'padding': '0 20'}),
-        html.Div([
-            dcc.Graph(
-                id='pokemon-sankey',
-            )
-        ]),
+            html.Div([
+                html.Div([
+                    html.Label("Dimensionality Reduction Features:"),
+                    build_dim_reduction_feats_selector(),
+                    html.Plaintext(
+                        'Note, that updates to these inputs reruns the dimensionality'
+                        'reduction and can take significant time.'
+                    ),
+                    html.Label("Highlight Feature:"),
+                    build_highlight_stat_dropdown(),
+                ]),
+                dcc.Loading(dcc.Graph(
+                    id='pokemon-scatter', style={"height": "70vh"}
+                )),
+                html.Plaintext(
+                    "Click on a Pokémon to view stats."
+                ),
+            ], style={'flex': '0 0 60%', 'height': '100%'}),
+            html.Div([
+                html.Div(
+                    [
+                        html.Div()
+                    ],
+                    id='pokemon-stats',
+                    style={"display": 'inline-block', "width": "35vw"}
+                ),
+                html.Div([
+                    dcc.Graph(
+                        id='pokemon-sankey',
+                        style={"width": "35vw", "height": "50%"}
+                    )
+                ], style={"display": 'inline-block'}),
+            ], style={'flex': '0 0 40%', "margin": "auto"}),
+        ], style={'display': "flex", "height": "90vh", "margin": "aut"})
     ])
 
 app.layout = build_layout()
