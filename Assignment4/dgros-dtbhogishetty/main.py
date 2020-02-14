@@ -64,7 +64,7 @@ def build_layout():
                     html.Label("Dimensionality Reduction Features (what features we consider):"),
                     build_dim_reduction_feats_selector(),
                     html.Plaintext(
-                        'Note, that updates to these inputs reruns the dimensionality'
+                        'Note, that updates to these inputs reruns the dimensionality '
                         'reduction and can take significant time.'
                     ),
                     html.Label("Marker Color Feature:"),
