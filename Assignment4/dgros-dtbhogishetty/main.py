@@ -1,3 +1,5 @@
+from typing import List
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -17,9 +19,9 @@ from dataproc import load_data, vectorize_examples, run_tsne
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 df = load_data()
-vecs = vectorize_examples(df)
-tsne = run_tsne(vecs)
+app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"})
 
+id_dimreduct_feats = "dimreduct-feats"
 
 def build_highlight_stat_dropdown():
     return dcc.Dropdown(
@@ -31,10 +33,25 @@ def build_highlight_stat_dropdown():
         value="Type_1"
     )
 
+
+def build_dim_reduction_feats_selector():
+    return dcc.Dropdown(
+        id=id_dimreduct_feats,
+        options=[
+            {"label": feat, "value": feat}
+            for feat in feats_all
+        ],
+        value=[feat for feat in feats_all],
+        multi=True,
+        clearable=False
+    )
+
+
 def build_sankey():
-    sankey_df = df[['Type_1','Body_Style']]
+    sankey_df = df[['Type_1', 'Body_Style']]
     fig = px.parallel_categories(sankey_df)
     return fig
+
 
 def build_layout():
     return html.Div([
@@ -42,8 +59,14 @@ def build_layout():
             html.H1("Exploring Pokémon Data")
         ], style={'text-align':'center'}),
         html.Div([
+            html.Label("Dimensionality Reduction Features:"),
+            build_dim_reduction_feats_selector(),
             html.Label("Highlight Feature:"),
             build_highlight_stat_dropdown(),
+            html.Plaintext(
+                'Note, that updates to these inputs reruns the dimensionality'
+                'reduction and can take significant time.'
+            )
         ]),
         html.Div([
             dcc.Graph(
@@ -65,8 +88,15 @@ app.layout = build_layout()
 
 @app.callback(
     Output('pokemon-scatter', 'figure'),
-    [Input('highlight-stat-dropdown', 'value')])
-def build_scatter(highlight_stat: str):
+    [
+        Input('highlight-stat-dropdown', 'value'),
+        Input(id_dimreduct_feats, 'value')
+    ])
+def build_scatter(highlight_stat: str, dimreduct_feats: List[str]):
+    print("Running tsne")
+    vecs = vectorize_examples(df, dimreduct_feats)
+    tsne = run_tsne(vecs)
+
     def build_color(vals):
         if highlight_stat in feats_numeric + feats_ordinal:
             return vals
@@ -112,7 +142,7 @@ def display_click_data(clickData):
     ddf = df[df['Name'] == name]
     bar_x = ['HP','Normal Attack','Normal Defense','Special Attack','Special Defence','Speed']
     bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(ddf['Sp_Def']).append(ddf['Speed'])
-    fig = px.bar(x=bar_x, y=bar_y,labels={'x':'Pokemon Stats','y':'Value'})
+    fig = px.bar(x=bar_x, y=bar_y,labels={'x': 'Pokemon Stats', 'y': 'Value'})
     return dcc.Graph(figure=fig)
 
 
