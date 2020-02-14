@@ -1,5 +1,4 @@
 from typing import List
-
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -10,18 +9,16 @@ import pandas as pd
 import numpy as np
 import json
 import plotly.graph_objects as go
-
 from pandas import DataFrame
-
 from data_constants import feats_all, feats_numeric, feats_ordinal, feat_colors, feats_bool, bool_colors
 from dataproc import load_data, vectorize_examples, run_tsne
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 df = load_data()
-app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"})
 
 id_dimreduct_feats = "dimreduct-feats"
+
 
 def build_highlight_stat_dropdown():
     return dcc.Dropdown(
@@ -57,7 +54,7 @@ def build_layout():
     return html.Div([
         html.Div([
             html.H1("Exploring Pokémon Data")
-        ], style={'text-align':'center'}),
+        ], style={'text-align': 'center'}),
         html.Div([
             html.Label("Dimensionality Reduction Features:"),
             build_dim_reduction_feats_selector(),
@@ -69,9 +66,9 @@ def build_layout():
             )
         ]),
         html.Div([
-            dcc.Graph(
+            dcc.Loading(dcc.Graph(
                 id='pokemon-scatter'
-            )
+            ))
         ],style={'width': '60%', 'display': 'inline-block', 'padding': '0 20'}),
         html.Div([
             html.Div()
@@ -79,9 +76,9 @@ def build_layout():
         html.Div([
             dcc.Graph(
                 id='pokemon-sankey',
-                figure = build_sankey()
+                figure=build_sankey()
             )
-        ])
+        ]),
     ])
 
 app.layout = build_layout()
