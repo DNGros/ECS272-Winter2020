@@ -87,4 +87,4 @@ bool_colors = {
 }
 
 
-feats_all = feats_categorical + feats_ordinal + feats_bool + feats_numeric
+feats_all = feats_numeric + feats_bool + feats_categorical + feats_ordinal
