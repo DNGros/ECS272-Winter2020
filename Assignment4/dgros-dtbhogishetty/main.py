@@ -168,7 +168,8 @@ def display_click_data(clickData):
     ddf = df[df['Name'] == name]
     bar_x = ['HP','Normal Attack','Normal Defense','Special Attack','Special Defence','Speed']
     bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(ddf['Sp_Def']).append(ddf['Speed'])
-    fig = px.bar(x=bar_x, y=bar_y,labels={'x': 'Pokemon Stats', 'y': 'Value'})
+    fig = px.bar(x=bar_x, y=bar_y,labels={'x': name + ' Stats' ,'y': 'Value'})
+    fig.update_yaxes(range=[0,255])
     return dcc.Graph(figure=fig)
 
 
