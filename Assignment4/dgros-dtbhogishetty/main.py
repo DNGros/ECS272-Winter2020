@@ -12,12 +12,17 @@ import plotly.graph_objects as go
 from pandas import DataFrame
 from data_constants import feats_all, feats_numeric, feats_ordinal, feat_colors, feats_bool, bool_colors
 from dataproc import load_data, vectorize_examples, run_tsne
+from util import setup_cache
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 df = load_data()
 
+cache = setup_cache(app)
+
+# IDs
 id_dimreduct_feats = "dimreduct-feats"
+###
 
 
 def build_highlight_stat_dropdown():
@@ -58,12 +63,12 @@ def build_layout():
         html.Div([
             html.Label("Dimensionality Reduction Features:"),
             build_dim_reduction_feats_selector(),
-            html.Label("Highlight Feature:"),
-            build_highlight_stat_dropdown(),
             html.Plaintext(
                 'Note, that updates to these inputs reruns the dimensionality'
                 'reduction and can take significant time.'
-            )
+            ),
+            html.Label("Highlight Feature:"),
+            build_highlight_stat_dropdown(),
         ]),
         html.Div([
             dcc.Loading(dcc.Graph(
@@ -83,6 +88,17 @@ def build_layout():
 
 app.layout = build_layout()
 
+@cache.memoize()
+def get_tsne_cached(dimreduct_feats: List[str]):
+    print("Running tsne")
+    vecs = vectorize_examples(df, dimreduct_feats)
+    return run_tsne(vecs)
+
+
+# Run the get_tsne on init so that it will show loading screen until this is ready
+get_tsne_cached(feats_all)
+
+
 @app.callback(
     Output('pokemon-scatter', 'figure'),
     [
@@ -90,9 +106,7 @@ app.layout = build_layout()
         Input(id_dimreduct_feats, 'value')
     ])
 def build_scatter(highlight_stat: str, dimreduct_feats: List[str]):
-    print("Running tsne")
-    vecs = vectorize_examples(df, dimreduct_feats)
-    tsne = run_tsne(vecs)
+    tsne = get_tsne_cached(dimreduct_feats)
 
     def build_color(vals):
         if highlight_stat in feats_numeric + feats_ordinal:
