@@ -24,7 +24,7 @@ type_colors = {
     "Ice": "lightblue",
     "Dragon": "cyan",
     "Dark": "black",
-    "Steel": "grey",
+    "Steel": "darkgrey",
     "Flying": "turquoise",
     "nan": "ivory"
 }

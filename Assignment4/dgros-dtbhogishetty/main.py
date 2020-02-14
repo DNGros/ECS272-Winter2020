@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 from pandas import DataFrame
 from data_constants import feats_all, feats_numeric, feats_ordinal, feat_colors, feats_bool, bool_colors
 from dataproc import load_data, vectorize_examples, run_tsne
+from plottool import make_sankey
 from util import setup_cache
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -49,12 +50,6 @@ def build_dim_reduction_feats_selector():
     )
 
 
-def build_sankey():
-    sankey_df = df[['Type_1', 'Body_Style']]
-    fig = px.parallel_categories(sankey_df)
-    return fig
-
-
 def build_layout():
     return html.Div([
         html.Div([
@@ -81,7 +76,6 @@ def build_layout():
         html.Div([
             dcc.Graph(
                 id='pokemon-sankey',
-                figure=build_sankey()
             )
         ]),
     ])
@@ -140,6 +134,27 @@ def build_scatter(highlight_stat: str, dimreduct_feats: List[str]):
         )
     )
     return fig
+
+
+@app.callback(
+    Output('pokemon-sankey', 'figure'),
+    [Input('pokemon-scatter', 'clickData')])
+def build_sankey(clickData):
+    #categorical_dimensions = ['Type_1', 'Body_Style']
+    #dimensions = [dict(values=df[label], label=label) for label in categorical_dimensions]
+    #return go.Parcats(
+    #    dimensions=dimensions,
+    #)
+    if clickData:
+        name = clickData['points'][0]['customdata']
+        selected_row = df.loc[df['Name'] == name].to_dict()
+
+        def highlight_node(field, value):
+            return list(selected_row[field].values())[0] == value
+    else:
+        highlight_node = None
+
+    return {"data": [make_sankey(df, ['Body_Style', 'Type_1'], highlight_node)]}
 
 
 @app.callback(
