@@ -77,7 +77,9 @@ def build_layout():
             html.Div([
                 html.Div(
                     [
-                        html.Div()
+                        html.Div(dcc.Graph(
+                            figure=px.bar()
+                        ))
                     ],
                     id='pokemon-stats',
                     style={"display": 'inline-block', "width": "35vw"}
