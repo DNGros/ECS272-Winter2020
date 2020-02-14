@@ -31,9 +31,12 @@ def build_highlight_stat_dropdown():
         value="Type_1"
     )
 
+def build_sankey():
+    sankey_df = df[['Type_1','Body_Style']]
+    fig = px.parallel_categories(sankey_df)
+    return fig
 
 def build_layout():
-    ## TODO: put bar_x = column names and bar_y = stat values
     return html.Div([
         html.Div([
             html.H1("Exploring Pokémon Data")
@@ -46,10 +49,16 @@ def build_layout():
             dcc.Graph(
                 id='pokemon-scatter'
             )
-        ]),#,style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'}),
+        ],style={'width': '60%', 'display': 'inline-block', 'padding': '0 20'}),
         html.Div([
             html.Div()
-        ], id='pokemon-stats'),#,style={'width': '49%', 'display': 'inline-block', 'padding': '0 20'},id='pokemon-stats'),
+        ], id='pokemon-stats',style={'width': '40%', 'display': 'inline-block', 'padding': '0 20'}),
+        html.Div([
+            dcc.Graph(
+                id='pokemon-sankey',
+                figure = build_sankey()
+            )
+        ])
     ])
 
 app.layout = build_layout()
@@ -101,10 +110,9 @@ def display_click_data(clickData):
         raise PreventUpdate
     name = clickData['points'][0]['customdata']
     ddf = df[df['Name'] == name]
-    bar_x = ['Health Points', 'Attack', 'Defense', 'Special Attack', 'Special Defence', 'Speed']
-    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(
-        ddf['Sp_Def']).append(ddf['Speed'])
-    fig = px.bar(x=bar_x, y=bar_y)
+    bar_x = ['HP','Normal Attack','Normal Defense','Special Attack','Special Defence','Speed']
+    bar_y = ddf['HP'].append(ddf['Attack']).append(ddf['Defense']).append(ddf['Sp_Atk']).append(ddf['Sp_Def']).append(ddf['Speed'])
+    fig = px.bar(x=bar_x, y=bar_y,labels={'x':'Pokemon Stats','y':'Value'})
     return dcc.Graph(figure=fig)
 
 
