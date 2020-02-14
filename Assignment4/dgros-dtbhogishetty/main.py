@@ -90,7 +90,10 @@ def build_layout():
                         id='pokemon-sankey',
                         style={"width": "35vw", "height": "50%"}
                     ),
-                    html.Plaintext(f"Parallel Coordinates Sankey showing {', '.join(sankey_feats)}")
+                    html.Plaintext(
+                        f"Parallel Coordinates Sankey showing {', '.join(sankey_feats)}",
+                        style={"margin": "auto", "width": "100%", "text-align": "center"}
+                    )
                 ], style={"display": 'inline-block'}),
             ], style={'flex': '0 0 40%', "margin": "auto"}),
         ], style={'display': "flex", "height": "90vh", "margin": "aut"})
