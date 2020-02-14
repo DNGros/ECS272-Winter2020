@@ -25,7 +25,7 @@ cache = setup_cache(app)
 id_dimreduct_feats = "dimreduct-feats"
 ###
 
-sankey_feats = ['Body_Style', 'Type_1', 'Egg_Group_1']
+sankey_feats = ['Body_Style', 'Egg_Group_1', 'Type_1', 'Type_2']
 
 
 def build_highlight_stat_dropdown():
@@ -83,7 +83,7 @@ def build_layout():
                         html.Div()
                     ],
                     id='pokemon-stats',
-                    style={"display": 'inline-block', "width": "35vw"}
+                    style={"display": 'inline-block', "width": "40vw"}
                 ),
                 html.Div([
                     dcc.Graph(
@@ -91,7 +91,7 @@ def build_layout():
                         style={"width": "35vw", "height": "50%"}
                     ),
                     html.Plaintext(
-                        f"Parallel Coordinates Sankey showing {', '.join(sankey_feats)}",
+                        f"Sankey showing {', '.join(sankey_feats)}",
                         style={"margin": "auto", "width": "100%", "text-align": "center"}
                     )
                 ], style={"display": 'inline-block'}),
@@ -150,7 +150,19 @@ def build_scatter(highlight_stat: str, dimreduct_feats: List[str]):
         ),
         layout=go.Layout(
             autosize=True,
-            margin=dict(l=0, r=0, t=10, b=0)
+            margin=dict(l=0, r=0, t=10, b=0),
+            xaxis=dict(
+                autorange=True,
+                showgrid=True,
+                ticks='',
+                showticklabels=False
+            ),
+            yaxis=dict(
+                autorange=True,
+                showgrid=True,
+                ticks='',
+                showticklabels=False
+            )
         )
     )
     return fig
@@ -174,7 +186,12 @@ def build_sankey(clickData):
     else:
         highlight_node = None
 
-    return {"data": [make_sankey(df, sankey_feats, highlight_node)]}
+    return {
+        "data": [make_sankey(df, sankey_feats, highlight_node)],
+        "layout": go.Layout(
+            margin=dict(l=45, r=5, t=10, b=5),
+        )
+    }
 
 
 @app.callback(
