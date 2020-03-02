@@ -30,6 +30,12 @@ class ScatterDataPoint:
     def class_id(self) -> int:
         return self._class_id
 
+    def __str__(self):
+        return f"point(cls={self.class_id}, {self.coord}))"
+
+    def __repr__(self):
+        return str(self)
+
     def __eq__(self, other):
         return self is other
 
@@ -58,9 +64,10 @@ def sample_data(
     out_data = []
     added_points_dist_tracker = DistQueriablePointTracker(num_classes)
     kde = PointsKDE(data)
-    while not data_sampler.is_empty() and zoom_level < max_zoom_level:
+    while not data_sampler.is_empty() and zoom_level <= max_zoom_level:
         # Find w based off equation 2
         w = point_radius / zoom_level * kde.mean_density
+        print("w", w)
         # Store the examples at the current zoom level. Same format seperated by class
         this_zoom_data = tuple([] for _ in data)
         # Store the examples which don't pass so can repopulate at next zoom level.
@@ -70,7 +77,8 @@ def sample_data(
             # Select a trial sample from the most unfilled data class
             point = data_sampler.sample_least_filled()
             # Because the distances are
-            acceptable_dists = get_acceptable_dists(point, kde, w)
+            acceptable_dists = get_closest_acceptable_dist(point, kde, w)
+            print("acceptable_dists", point, acceptable_dists)
             pass_conflict = conflict_check(point, acceptable_dists, added_points_dist_tracker)
             if pass_conflict:
                 this_zoom_data[point.class_id].append(point)
@@ -100,6 +108,7 @@ class ScatterDatasetSampler:
         ]
 
     def get_fill_rate(self, class_ind) -> float:
+        """Get fill rate as defined by in section 2.1 in [41]"""
         # TODO (DNGros): The paper says target length is dependent on our
         #   r matrix which we don't have yet. Kind of confusing...
         target_num_samples = self._original_lengths[class_ind]
@@ -139,6 +148,8 @@ class ScatterDatasetSampler:
 
 
 class DistQueriablePointTracker:
+    """Allows one to keep track of a set of points by class and query if
+    there are any points within a certain radius of a point"""
     def __init__(self, num_classes: int, num_dims: float = 2):
         self.num_dims = num_dims
         self.data = [
@@ -168,11 +179,8 @@ class DistQueriablePointTracker:
         return np.any(in_thresh)
 
 
-def convert_points_to_np(points: List[ScatterDataPoint]) -> np.ndarray:
-    return np.array([list(p.coord) for p in points])
-
-
 class PointsKDE:
+    """Used to calculate f-hat_i(x)"""
     def __init__(self, points_by_class: EXAMPLES_BY_CLASS):
         self._precomp_kdes: Dict[ScatterDataPoint, float] = {}
         self._kde_kernels = []
@@ -197,23 +205,33 @@ class PointsKDE:
         return self._mean_density
 
     def density_at(self, class_ind: int, coord: COORD_TYPE) -> float:
+        """Equivalent to calling f-hat_i(x) where i = class_ind and x = coord"""
         # TODO (DNGros): In section 3.1 they say they do not normalize
         #   by N. So I think we have to multiply by N. However, not
         #   actually 100% sure that scipy is normalizing or not. We might
         #   need to manually calculate it in order to make sure doing it right
         N = self._num_points_by_class[class_ind]
-        parray = np.array([list(coord)]).T  # Needs to be (dim, point_num)
+        parray = np.array([list(coord)]).T  # Needs to be (dim, point_num) but we only have 1 point
         pdf = self._kde_kernels[class_ind].evaluate(np.array(parray))
         assert len(pdf) == 1
         pdf = pdf[0]
         return pdf * N
 
 
-def get_acceptable_dists(
+def get_closest_acceptable_dist(
     data_point: ScatterDataPoint,
     kde: PointsKDE,
-    w
+    w: float
 ) -> Tuple[float, ...]:
+    """
+    This takes the place of BuildRMatrix.
+
+    Calculate the data_point.class_id row of the R matrix. We don't care
+    about the other rows for the current point we are trying to add.
+    """
+    # TODO (DNGros): This is wrong. Only the diagnal is w / f(x).
+    #   Try and figure out what it is supposed to be based off the Program 2
+    #   in the other ref paper.
     return tuple(
         w / kde.density_at(class_id, data_point.coord)
         for class_id in range(kde.num_classes)
@@ -231,5 +249,41 @@ def conflict_check(
         not dist_index.has_point_in_ball(class_id, point.coord, acceptable_dist)
         for class_id, acceptable_dist in enumerate(acceptable_dists)
     )
+
+
+def convert_examples_by_class_to_np(data: EXAMPLES_BY_CLASS):
+    examples = []
+    class_ids = []
+    for class_id, points in enumerate(data):
+        for point in points:
+            examples.append(list(point.coord))
+            class_ids.append(class_id)
+    return np.array(examples), np.array(class_ids)
+
+
+def convert_np_to_points(
+        points: np.ndarray,  # (n_points, dim)
+        class_ids: np.ndarray  # (n_points)
+) -> EXAMPLES_BY_CLASS:
+    class_id_set = set(class_ids)
+    # The incoming class ids might be nonsequential or even strings.
+    # Internally keep track of sequential ids
+    class_id_set_to_seq_id = {
+        i: class_id
+        for i, class_id in enumerate(sorted(class_id_set))
+    }
+    data = []
+    for class_id in class_id_set_to_seq_id.values():
+        is_in_class = class_ids == class_id_set_to_seq_id[class_id]
+        class_points = points[is_in_class]
+        class_data = []
+        for point in class_points:
+            class_data.append(ScatterDataPoint(class_id, tuple(point)))
+        data.append(class_data)
+    return tuple(data)
+
+
+def convert_points_to_np(points: List[ScatterDataPoint]) -> np.ndarray:
+    return np.array([list(p.coord) for p in points])
 
 
