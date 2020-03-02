@@ -3,6 +3,12 @@ def get_kde():
     pass
 
 
+def get_fill_rate(num_exisiting_samples: int, target_number_of_samples: int):
+    return num_exisiting_samples / target_number_of_samples
+
+
+
+
 def build_r_matrix():
     # TODO dngros
     pass

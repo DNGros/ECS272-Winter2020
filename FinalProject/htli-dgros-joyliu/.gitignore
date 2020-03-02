@@ -137,5 +137,4 @@ dmypy.json
 #
 *.swo
 *.swp
-idea/
-data/*
+.idea/
