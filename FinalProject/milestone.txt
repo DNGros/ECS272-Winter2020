@@ -1,0 +1,16 @@
+Milestone
+
+We have thoroughly read the paper and important references. Now we have a clear idea of what the paper is doing and how to reimplement the paper. We've decided to implement the project as a web application so that it's platform independent. We are currently implementing the backend of the application with python and we've already set up the outline for the primary algorithms in the paper. Detailed progress regarding the code is listed below:
+- Created classes and methods for data point, sampler, and KDE.
+- Implemented the outline of primary algorithms.
+- Gaussian kernel density estimation is working.
+- Prototype of zoom-in function is working.
+
+We are still trying to implement following parts:
+- Construction of R matrix.
+- The method to get the fill rate of each class.
+- Some details in KDE.
+
+Some parts of the project are still yet to be implemented:
+- Data transfer between backend and frontend.
+- Data visualization and toolkits on frontend.
