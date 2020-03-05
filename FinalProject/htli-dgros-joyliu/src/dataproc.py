@@ -1,4 +1,6 @@
 import random
+import math
+import math
 from typing import Tuple, List, Dict, Union
 import numpy as np
 from scipy import stats
@@ -63,11 +65,17 @@ def sample_data(
     out_data = []
     added_points_dist_tracker = DistQueriablePointTracker(num_classes)
     kde = PointsKDE(data)
+    num_points = sum(len(cl_points) for cl_points in data)
     while not data_sampler.is_empty() and zoom_level <= max_zoom_level:
         # Find w based off equation 2
-        w = point_radius / zoom_level * kde.mean_density
+        # NOTE: This isn't the exact same as the equation. Using that equation
+        # seems to agressive with removing points in the sparser regions.
+        # Instead we are going to
+        w = (point_radius / zoom_level) * kde.mean_density / math.sqrt(num_points)
         print("w", w)
+        print("kde.mean_density", kde.mean_density)
         # Store the examples at the current zoom level. Same format seperated by class
+        #   This is like P' in the paper.
         this_zoom_data = tuple([] for _ in data)
         # Store the examples which don't pass so can repopulate at next zoom level.
         #   This is equivalent to P'' in the paper's pseudocode.
@@ -76,8 +84,7 @@ def sample_data(
             # Select a trial sample from the most unfilled data class
             point = data_sampler.sample_least_filled()
             # Because the distances are
-            acceptable_dists = get_closest_acceptable_dist(point, kde, w)
-            print("acceptable_dists", point, acceptable_dists)
+            acceptable_dists = get_closest_acceptable_dist(point, kde, w, point_radius)
             pass_conflict = conflict_check(point, acceptable_dists, added_points_dist_tracker)
             if pass_conflict:
                 this_zoom_data[point.class_id].append(point)
@@ -191,7 +198,12 @@ class PointsKDE:
             kernel = stats.gaussian_kde(parray.T, bw_method='silverman')
             self._kde_kernels.append(kernel)
             self._num_points_by_class.append(len(points))
-            all_desnities.extend([self.density_at(class_id, point.coord) for point in points])
+            this_class_densities = [
+                self.density_at(class_id, point.coord) for point in points
+            ]
+            #print("Class", class_id, "densities", this_class_densities)
+            print("Bandwidth", self._kde_kernels[class_id].factor)
+            all_desnities.extend(this_class_densities)
         self._mean_density = float(np.mean(all_desnities))
 
     @property
@@ -205,10 +217,6 @@ class PointsKDE:
 
     def density_at(self, class_ind: int, coord: COORD_TYPE) -> float:
         """Equivalent to calling f-hat_i(x) where i = class_ind and x = coord"""
-        # TODO (DNGros): In section 3.1 they say they do not normalize
-        #   by N. So I think we have to multiply by N. However, not
-        #   actually 100% sure that scipy is normalizing or not. We might
-        #   need to manually calculate it in order to make sure doing it right
         N = self._num_points_by_class[class_ind]
         parray = np.array([list(coord)]).T  # Needs to be (dim, point_num) but we only have 1 point
         pdf = self._kde_kernels[class_ind].evaluate(np.array(parray))
@@ -220,7 +228,9 @@ class PointsKDE:
 def get_closest_acceptable_dist(
     data_point: ScatterDataPoint,
     kde: PointsKDE,
-    w: float
+    w: float,
+    point_radius: float,
+    sample_space_dimens = 2
 ) -> Tuple[float, ...]:
     """
     This takes the place of BuildRMatrix.
@@ -228,13 +238,22 @@ def get_closest_acceptable_dist(
     Calculate the data_point.class_id row of the R matrix. We don't care
     about the other rows for the current point we are trying to add.
     """
-    # TODO (DNGros): This is wrong. Only the diagnal is w / f(x).
-    #   Try and figure out what it is supposed to be based off the Program 2
-    #   in the other ref paper.
-    return tuple(
-        w / kde.density_at(class_id, data_point.coord)
+    # TODO (DNGros): Here the calcualation of the off diagonals may not be exactly
+    #   right. Essentially what we are doing is taking the average of the diagnal
+    #   kde and off-diagnal one. In [41] they vaguely seem to suggest this.
+    diag_kde = kde.density_at(data_point.class_id, data_point.coord)
+    acceptable_dists = tuple(
+        # Diag value
+        w / diag_kde
+        if class_id == data_point.class_id else
+        # Non-diag value
+        w / ((kde.density_at(class_id, data_point.coord) + diag_kde) / 2)
         for class_id in range(kde.num_classes)
     )
+    # Put a hard limit on how close can overlap. The actual paper does not do
+    # this, but it seems to be in the spirit of the actual goal.
+    acceptable_dists = tuple(max(dist, point_radius*0.7) for dist in acceptable_dists)
+    return acceptable_dists
 
 
 def conflict_check(
