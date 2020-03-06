@@ -5,7 +5,7 @@ from typing import Tuple, List, Dict, Union
 import numpy as np
 from scipy import stats
 
-from src.thirdparty.dynamic_array import DynamicArray
+from visualization.src.thirdparty.dynamic_array import DynamicArray
 
 COORD_TYPE = Union[Tuple[float, float], Tuple[float, float, float]]
 
