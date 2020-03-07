@@ -13,6 +13,8 @@ import time
 from visualization.src.dataproc import convert_points_to_np, convert_np_to_points, sample_data, \
     convert_examples_by_class_to_np
 
+def __test__(request):
+    return render(request, 'visualization.html')
 
 def get_scatter_points(request):
     """

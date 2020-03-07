@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title> ECS272 InfoVis - Assignment 4 </title>
+    <!-- <form action="/getGenderRatio/" method="post"> {% csrf_token %}
+    <button type="submit">getGenderRatio</button>
+</form> -->
+
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/sankey.js"></script>
+    <script src="http://malsup.github.com/jquery.form.js"></script>
+    <script src="{% static 'd3-tip.js' %}"></script>
+    <script src="{% static 'main.js' %}"></script>
+
+    <style>
+        h1,
+        h2,
+        h3,
+        p,
+        #btn,
+        text,
+        label {
+            font-family: palatino;
+            color: #6b486b;
+        }
+
+        body {
+            background-color: beige;
+        }
+
+        body,
+        div {
+            text-align: center;
+        }
+
+        svg {
+            display: block;
+        }
+
+        #scatter {
+            /* position: absolute; */
+            /* top: 150px;
+            left: 10px; */
+            min-width: 600;
+            display: inline-block;
+        }
+
+        #histogram {
+            /* position: absolute; */
+            /* top: 150px;
+            left: 650px; */
+            display: inline-block;
+        }
+
+        #sankey {
+            /* position: absolute; */
+            /* top: 950px;
+            left: 45px; */
+            display: inline-block;
+        }
+
+        #visualization {
+            text-align: center;
+        }
+
+        .d3-tip {
+            line-height: 1;
+            font-weight: bold;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 2px;
+        }
+
+        .node rect {
+            cursor: move;
+            fill-opacity: .9;
+            shape-rendering: crispEdges;
+        }
+
+        .node text {
+            pointer-events: none;
+            text-shadow: 0 1px 0 #fff;
+        }
+
+        .link {
+            fill: none;
+            stroke: #000;
+            stroke-opacity: .2;
+        }
+
+        .link:hover {
+            stroke-opacity: .5;
+        }
+
+        .lasso path {
+            stroke: rgb(80, 80, 80);
+            stroke-width: 2px;
+        }
+
+        .lasso .drawn {
+            fill-opacity: .05;
+        }
+
+        .lasso .loop_close {
+            fill: none;
+            stroke-dasharray: 4, 4;
+        }
+
+        .lasso .origin {
+            fill: #3399FF;
+            fill-opacity: .5;
+        }
+
+        .not_possible {
+            fill: rgb(200, 200, 200);
+        }
+
+        .selected {
+            fill: orange;
+        }
+
+        .possible {
+            fill: #EC888C;
+        }
+    </style>
+</head>
+<h1>Visual Abstraction and Exploration of Multi-class Scatterplots</h1>
+<p>Authors: David Gros, Jiayu Liu, Haitong Li</p>
+
+
+<body>
+    <div id="visualization">
+        <div id="scatter">
+            <h3>Scatter Plot</h3>
+            <div id="select">
+                <form id="sendk">
+                    <!-- {% csrf_token %} -->
+                    <label for="k">Put a K value:</label>
+                    <input type="text" id="k" name="k"><br><br>
+                    <input id="btn" type="button" value="Set K">
+                </form>
+            </div>
+        </div>
+    </div>
+</body>

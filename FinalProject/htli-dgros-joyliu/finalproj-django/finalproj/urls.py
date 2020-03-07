@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from visualization.views import get_scatter_points
+from visualization.views import get_scatter_points, __test__
 
 urlpatterns = [
+    path('', __test__),
     path('admin/', admin.site.urls),
     path('get_scatter_points/', get_scatter_points)
 ]
