@@ -19,27 +19,45 @@ def __test__(request):
 def get_scatter_points(request):
     """
     # Return scatter points in json to the frontend.
-    Format: `{x: List[int], y: List[int], c: List[int], lvl: List[int]}`
+    Format: `{x: List[int], y: List[int], c: List[int], color: List[int], lvl: List[int]}`
 
     url: `get_scatter_points/`
 
-    ~Currently a test without zoom-in feature~
+    ~Currently a test without zoom-in feature and color info~
     """
 
-    df = pd.read_csv('ConfLongDemo_JSI.csv')
-    filtered = df.loc[(df['Activity'] == 'walking') | (df['Activity'] == 'sitting') | (df['Activity'] == 'standing up from lying')]
-    print("Number of instances: {0}".format(len(filtered)))
+    # sample person activity dataset
+    # ----------------------------------------------------------------
+    # df = pd.read_csv('ConfLongDemo_JSI.csv')
+    # filtered = df.loc[(df['Activity'] == 'walking') | (df['Activity'] == 'sitting') | (df['Activity'] == 'standing up from lying')]
+    # print("Number of instances: {0}".format(len(filtered)))
 
-    class_mapping = {'walking': 0, 'sitting': 1, 'standing up from lying': 2}
+    # class_mapping = {'walking': 0, 'sitting': 1, 'standing up from lying': 2}
 
-    points = np.vstack([filtered.X, filtered.Y]).T
-    classes = np.array([class_mapping[a] for a in filtered.Activity])
+    # points = np.vstack([filtered.X, filtered.Y]).T
+    # classes = np.array([class_mapping[a] for a in filtered.Activity])
 
+    # scat_points = convert_np_to_points(points, classes)
+    # st_time = time.time()
+    # samples = sample_data(scat_points, 1, 1, point_radius=.2)
+    # end_time = time.time()
+    # print("Took {0: .2f} minutes to resample the points".format(end_time - st_time))
+    # ----------------------------------------------------------------
+
+    # sample generated test data
+    # ----------------------------------------------------------------
+    points, classes = make_classification(
+        n_features=2,
+        n_redundant=0,
+        n_informative=2,
+        n_classes=3,
+        n_samples=300,
+        n_clusters_per_class=1,
+        hypercube=False
+    )
     scat_points = convert_np_to_points(points, classes)
-    st_time = time.time()
     samples = sample_data(scat_points, 1, 1, point_radius=.2)
-    end_time = time.time()
-    print("Took {0: .2f} minutes to resample the points".format(end_time - st_time))
+    # ----------------------------------------------------------------
 
     x = []
     y = []
