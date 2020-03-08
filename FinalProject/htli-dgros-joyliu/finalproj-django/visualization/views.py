@@ -56,7 +56,7 @@ def get_scatter_points(request):
         hypercube=False
     )
     scat_points = convert_np_to_points(points, classes)
-    samples = sample_data(scat_points, 1, 1, point_radius=.2)
+    samples = sample_data(scat_points, 1, 3, point_radius=.2)
     # ----------------------------------------------------------------
 
     x = []
