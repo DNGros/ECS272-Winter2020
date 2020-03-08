@@ -305,3 +305,80 @@ def convert_points_to_np(points: List[ScatterDataPoint]) -> np.ndarray:
     return np.array([list(p.coord) for p in points])
 
 
+class ColorManager():
+    """
+    Generate optimized colors for each class for best distinguishability
+    """
+    def __init__(self, points: EXAMPLES_BY_CLASS):
+        self.n_sample = 100j
+        self.points = points
+        self.kde = PointsKDE(points)
+        self.colors = []
+
+        thres = 10
+        for _ in range(10):
+            self.generate_colors()
+            # TODO (Jiayu): This is wrong, distance between any two colors should
+            # be less than the threshold. The threshold is arbitrarily set for now.
+            # Need tests to set a better value
+            if self.K_cost(self.colors) > thres:
+                break
+            else:
+                self.colors = []
+        assert self.colors
+
+    
+    def K_cost(
+        self,
+        colors: Tuple[Tuple[float, float, float], ...],
+        points = self.points
+    ) -> float:
+        """Equation 3 in the paper
+        only handles 2D coords"""
+        n_class = len(points)
+        kde = PointsKDE(points)
+        points = convert_points_to_np(points)
+        max_x = points[:, 0].max()
+        min_x = points[:, 0].min()
+        max_y = points[:, 1].max()
+        min_y = points[:, 1].min()
+        samples = np.mgrid[min_x:max_x:self.n_sample, min_y:max_y:self.n_sample].T
+        E = 0
+        for _ in samples:
+            local = 0
+            for sample in _:
+                for i in range(n_class):
+                    for j in range(i+1, n_class):
+                        local += self._alpha(sample, i, j) * self.color_dist(self.colors[i], self.colors[j])
+                E += self._beta(sample) * local
+        return E
+
+
+    def _alpha(self, sample: List[int, int], i: int, j: int) -> float:
+        """Calculate alpha in region, equation 4"""
+        return math.e ** (-abs(self.kde.density_at(i, sample), self.kde.density_at(j, sample)))
+
+
+    def _beta(self, sample: List[int, int]) -> float:
+        """Calculate beta in region, equation 4"""
+        return sum([self.kde.density_at(i, sample) for i in range(len(self.points))])
+
+
+    def generate_colors(self):
+        """Generate colors for each class in CIELAB color space that can result in 
+        minimum K_cost"""
+        # TODO (Jiayu): Still need to find a way to generate colors that are
+        # quite distinct from each other, and can yield minimum K_cost
+        pass
+
+
+    def color_dist(
+        self,
+        color1: Tuple[float, float, float],
+        color2: Tuple[float, float, float]
+    ) -> float:
+        """Calculate the euclidean distance between colors"""
+        x1, y1, z1 = color1
+        x2, y2, z2 = color2
+        return math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2 + (z1-z2) ** 2)
+
