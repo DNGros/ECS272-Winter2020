@@ -11,7 +11,7 @@ import time
 #import seaborn as sns
 
 from visualization.src.dataproc import convert_points_to_np, convert_np_to_points, sample_data, \
-    convert_examples_by_class_to_np
+    convert_examples_by_class_to_np, ColorManager
 
 def __test__(request):
     return render(request, 'visualization.html')
@@ -58,6 +58,14 @@ def get_scatter_points(request):
     scat_points = convert_np_to_points(points, classes)
     samples = sample_data(scat_points, 1, 3, point_radius=.2)
     # ----------------------------------------------------------------
+
+
+    # TODO (Jiayu): ColorManager is working now
+    # still need to integrate colors into JSON
+    cm = ColorManager(scat_points)
+    colors = cm.get_colors()
+    print(colors)
+
 
     x = []
     y = []

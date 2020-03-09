@@ -6,6 +6,7 @@ import numpy as np
 from scipy import stats
 
 from visualization.src.thirdparty.dynamic_array import DynamicArray
+from visualization.src.thirdparty.poission_disc_sampler import PoissonDiscSampler
 
 COORD_TYPE = Union[Tuple[float, float], Tuple[float, float, float]]
 
@@ -310,34 +311,41 @@ class ColorManager():
     Generate optimized colors for each class for best distinguishability
     """
     def __init__(self, points: EXAMPLES_BY_CLASS):
-        self.n_sample = 100j
+        self.n_sample = 10j
         self.points = points
         self.kde = PointsKDE(points)
         self.colors = []
 
-        thres = 10
+        lightness = 50
+        cur_min = None
+
+        # generate color 10 times
+        # keep the one with lowest K
         for _ in range(10):
-            self.generate_colors()
-            # TODO (Jiayu): This is wrong, distance between any two colors should
-            # be less than the threshold. The threshold is arbitrarily set for now.
-            # Need tests to set a better value
-            if self.K_cost(self.colors) > thres:
-                break
-            else:
-                self.colors = []
-        assert self.colors
+            colors = self.generate_colors(lightness, len(points))
+            cur = self.K_cost(colors, self.points, self.kde)
+            if not cur_min:
+                cur_min = cur
+                self.colors = colors
+            elif cur_min > cur:
+                cur_min = cur
+                self.colors = colors
+
+
+    def get_colors(self):
+        return self.colors
 
     
     def K_cost(
         self,
         colors: Tuple[Tuple[float, float, float], ...],
-        points = self.points
+        points: EXAMPLES_BY_CLASS, 
+        kde: PointsKDE
     ) -> float:
         """Equation 3 in the paper
         only handles 2D coords"""
         n_class = len(points)
-        kde = PointsKDE(points)
-        points = convert_points_to_np(points)
+        points = self.points2np(points)
         max_x = points[:, 0].max()
         min_x = points[:, 0].min()
         max_y = points[:, 1].max()
@@ -349,27 +357,44 @@ class ColorManager():
             for sample in _:
                 for i in range(n_class):
                     for j in range(i+1, n_class):
-                        local += self._alpha(sample, i, j) * self.color_dist(self.colors[i], self.colors[j])
+                        local += self._alpha(sample, i, j) * self.color_dist(colors[i], colors[j])
                 E += self._beta(sample) * local
         return E
 
 
-    def _alpha(self, sample: List[int, int], i: int, j: int) -> float:
+    def _alpha(self, sample: List[int], i: int, j: int) -> float:
         """Calculate alpha in region, equation 4"""
-        return math.e ** (-abs(self.kde.density_at(i, sample), self.kde.density_at(j, sample)))
+        return math.e ** (-abs(self.kde.density_at(i, sample) - self.kde.density_at(j, sample)))
 
 
-    def _beta(self, sample: List[int, int]) -> float:
+    def _beta(self, sample: List[int]) -> float:
         """Calculate beta in region, equation 4"""
         return sum([self.kde.density_at(i, sample) for i in range(len(self.points))])
 
 
-    def generate_colors(self):
+    def generate_colors(self, L: float, n: int) -> List[List[float]]:
         """Generate colors for each class in CIELAB color space that can result in 
-        minimum K_cost"""
-        # TODO (Jiayu): Still need to find a way to generate colors that are
-        # quite distinct from each other, and can yield minimum K_cost
-        pass
+        minimum K_cost
+        
+        Input: `L` User specified lightness, [0, 100]
+
+        ~Distance threshold is 180 for now~
+        """
+        # -128 <= a <= 128, -128 <= b <= 128
+        # set distance threshold to be 180 for now
+        # TODO (Jiayu): Still need to figure out the best threshold
+        # but 180 is working well for 3 classes
+        pds = PoissonDiscSampler(10, 180, 256, 256, n)
+        res = pds.sample()
+        # change type to list
+        for i in range(len(res)):
+            res[i] = list(res[i])
+        # calculate correct color info
+        for i in range(len(res)):
+            for j in range(2):
+                res[i][j] -= 128
+        # return [L, a, b]
+        return [[L]+ab for ab in res]
 
 
     def color_dist(
@@ -382,3 +407,9 @@ class ColorManager():
         x2, y2, z2 = color2
         return math.sqrt((x1-x2) ** 2 + (y1-y2) ** 2 + (z1-z2) ** 2)
 
+    def points2np(self, points: EXAMPLES_BY_CLASS) -> np.ndarray:
+        res = []
+        for c in points:
+            for pt in c:
+                res.append(pt.coord)
+        return np.array(res)
