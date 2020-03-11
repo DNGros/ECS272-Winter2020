@@ -50,7 +50,7 @@ def get_scatter_points(request):
         n_features=2,
         n_redundant=0,
         n_informative=2,
-        n_classes=3,
+        n_classes=2,
         n_samples=300,
         n_clusters_per_class=1,
         hypercube=False

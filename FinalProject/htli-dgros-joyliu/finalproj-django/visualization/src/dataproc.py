@@ -319,10 +319,12 @@ class ColorManager():
         lightness = 50
         cur_min = None
 
-        # generate color 10 times
+        # generate color 20 times
         # keep the one with lowest K
-        for _ in range(10):
+        for _ in range(20):
             colors = self.generate_colors(lightness, len(points))
+            if len(colors) < len(points):
+                continue
             cur = self.K_cost(colors, self.points, self.kde)
             if not cur_min:
                 cur_min = cur
@@ -338,7 +340,7 @@ class ColorManager():
     
     def K_cost(
         self,
-        colors: Tuple[Tuple[float, float, float], ...],
+        colors: List[List[float]],
         points: EXAMPLES_BY_CLASS, 
         kde: PointsKDE
     ) -> float:
@@ -357,6 +359,8 @@ class ColorManager():
             for sample in _:
                 for i in range(n_class):
                     for j in range(i+1, n_class):
+                        # If list out of range: refresh
+                        # because the sampler didn't find enough colors
                         local += self._alpha(sample, i, j) * self.color_dist(colors[i], colors[j])
                 E += self._beta(sample) * local
         return E
@@ -378,13 +382,15 @@ class ColorManager():
         
         Input: `L` User specified lightness, [0, 100]
 
-        ~Distance threshold is 180 for now~
         """
         # -128 <= a <= 128, -128 <= b <= 128
-        # set distance threshold to be 180 for now
-        # TODO (Jiayu): Still need to figure out the best threshold
-        # but 180 is working well for 3 classes
-        pds = PoissonDiscSampler(10, 180, 256, 256, n)
+        # TODO (Jiayu): Wrote thres based on the case for 3 classes,
+        # might be wrong, but is working fine with 3 classes. 
+        # It's possible for sampler to not be able to sample enough
+        # colors if the threshold is too high.
+        thres = 256 * math.sin((180 / n) * math.pi / 180) * 0.55
+        print("Color distance threshold: {}".format(thres))
+        pds = PoissonDiscSampler(10, thres, 256, 256, n)
         res = pds.sample()
         # change type to list
         for i in range(len(res)):
