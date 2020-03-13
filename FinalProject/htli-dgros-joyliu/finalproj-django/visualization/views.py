@@ -18,12 +18,12 @@ def __test__(request):
 
 def get_scatter_points(request):
     """
-    # Return scatter points in json to the frontend.
+    # Return resampled scatter points in json to the frontend.
     Format: `{x: List[int], y: List[int], c: List[int], color: List[int], lvl: List[int]}`
 
     url: `get_scatter_points/`
 
-    ~Currently a test without zoom-in feature and color info~
+    ~Currently a test without zoom-in feature~
     """
 
     # sample person activity dataset
@@ -59,17 +59,13 @@ def get_scatter_points(request):
     samples = sample_data(scat_points, 1, 3, point_radius=.2)
     # ----------------------------------------------------------------
 
-
-    # TODO (Jiayu): ColorManager is working now
-    # still need to integrate colors into JSON
     cm = ColorManager(scat_points)
     colors = cm.get_colors()
-    print(colors)
-
 
     x = []
     y = []
     c = []
+    clr = []
     lvl = []
     for level_data in samples:
         cur_lvl, pts = level_data
@@ -79,7 +75,42 @@ def get_scatter_points(request):
                 x.append(pos[0])
                 y.append(pos[1])
                 c.append(int(pt.class_id))
+                clr.append(colors[int(pt.class_id)])
                 lvl.append(cur_lvl)
     print("x:{0}, y:{1}, c{2}, lvl:{3}".format(len(x), len(y), len(c), len(lvl)))
-    data = {'x': x, 'y': y, 'c': c, 'lvl': lvl}
+    data = {'x': x, 'y': y, 'c': c, 'clr': clr, 'lvl': lvl}
+    return JsonResponse(data)
+
+
+def get_orig_scatter_points(request):
+    """
+    # Return original scatter points in json to the frontend.
+    Format: `{x: List[int], y: List[int], c: List[int], color: List[int], lvl: List[int]}`
+
+    url: `get_orig_scatter_points/`
+
+    ~Currently a test without zoom-in feature~
+    """
+
+    df = pd.read_csv('ConfLongDemo_JSI.csv')
+    filtered = df.loc[(df['Activity'] == 'walking') | (df['Activity'] == 'sitting') | (df['Activity'] == 'standing up from lying')]
+    print("Number of instances: {0}".format(len(filtered)))
+
+    class_mapping = {'walking': 0, 'sitting': 1, 'standing up from lying': 2}
+
+    points = np.vstack([filtered.X, filtered.Y]).T
+    classes = np.array([class_mapping[a] for a in filtered.Activity])
+    # to get the colors we do need KDE, so it's still necessary to convert them to points
+    scat_points = convert_np_to_points(points, classes)
+
+    cm = ColorManager(scat_points)
+    colors = cm.get_colors()
+
+    x = list(filtered.X)
+    y = list(filtered.Y)
+    c = [class_mapping[cl] for cl in filtered.Activity]
+    clr = [colors[i] for i in c]
+    lvl = [1 for i in x]
+
+    data = {'x': x, 'y': y, 'c': c, 'clr': clr, 'lvl': lvl}
     return JsonResponse(data)
