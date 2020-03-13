@@ -4,7 +4,7 @@
         url: "get_scatter_points/",
         success: function (data) {
             console.log(data);
-            drawClusters(data);
+            mainScatter(data);
         }
     })
 })()
@@ -20,14 +20,12 @@ var svg1 = d3.select('#scatter')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
 
+
 console.log(svg1);
-function drawClusters(data) {
-    var lineg = svg1.append('g')
-        .attr("transform", "translate(" + "0,0 " + ")");
+function mainScatter(data) {
     var dotg = svg1.append('g')
         .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
-    var centerg = svg1.append('g')
-        .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+
     //get data
 
     dots = [];
@@ -41,7 +39,7 @@ function drawClusters(data) {
         };
         dots.push(dot);
     }
-    console.log(dots);
+    //console.log(dots);
     //draw 
     var x = d3.scaleLinear()
         .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
@@ -100,8 +98,16 @@ function drawClusters(data) {
         .on("mouseleave", tip.hide);
     dotg.call(tip);
 
-    console.log(scatterPlot);
+    //console.log(scatterPlot);
 
+    //views for different classes
+    var c = Array.from(new Set(data.c));
+    for (i = 0; i < c.length; i++) {
+        var data = dots.filter(function (el) {
+            return el.c == c[i];
+        });
+        drawScatter(data);
+    }
     //zooming
 
     var zoom = d3.zoom()
@@ -109,15 +115,17 @@ function drawClusters(data) {
         .translateExtent([[0, 0], [width, height]])
         .on("zoom", zoomed);
 
-    svg1.call(zoom);
-
+    //svg1.call(zoom);
+    $("#zoom").on('click', function () {
+        svg1.call(zoom);
+    })
     function zoomed() {
         var level = d3.event.transform.k;
         newdata = dots.filter(function (e) {
             return e.lvl <= level;
         })
-        console.log(level);
-        console.log(newdata);
+        //console.log(level);
+        //console.log(newdata);
         scatterPlot =
             dotg
                 .selectAll("circle")
@@ -137,7 +145,7 @@ function drawClusters(data) {
             .exit().remove();
 
         s = d3.selectAll("circle");
-        console.log(s);
+        //console.log(s);
 
         dotg.attr("transform", d3.event.transform);
         //console.log(d3.event.transform);
@@ -148,46 +156,127 @@ function drawClusters(data) {
 
     //zooming ends
     // dotg.call(tip);
+
+    //lasso selection
+
+    var lasso_start = function () {
+        console.log('start')
+        lasso.items()
+            .attr("r", 5)
+            .classed("not_possible", true)
+            .classed("selected", false);
+    };
+
+    var lasso_draw = function () {
+        console.log('draw')
+        lasso.possibleItems()
+            .classed("not_possible", false)
+            .classed("possible", true);
+        lasso.notPossibleItems()
+            .classed("not_possible", true)
+            .classed("possible", false);
+    };
+
+    var lasso_end = function () {
+        console.log('end')
+        lasso.items()
+            .classed("not_possible", false)
+            .classed("possible", false);
+        lasso.selectedItems()
+            .classed("selected", true)
+            //.attr('fill', 'orange')
+            .attr("r", 8);
+        s = lasso.selectedItems();
+        console.log(s._groups[0].length);
+        if (s._groups[0].length == 0) {
+            lasso.items()
+                .attr('fill', 'orange');
+        } else {
+            lasso.notSelectedItems()
+                .attr('fill', 'white')
+                .attr("r", 5);
+        }
+    };
+    //console.log(circles[0]);
+    var s = dotg.selectAll('circle');
+    const lasso = d3.lasso()
+        .closePathDistance(305)
+        .closePathSelect(true)
+        .targetArea(svg1)
+        .items(s)
+        .on("start", lasso_start)
+        .on("draw", lasso_draw)
+        .on("end", lasso_end);
+    console.log(lasso);
+    $("#lasso").on('click', function () {
+        svg1.call(lasso);
+    })
 }
 
-//update scatter plot on zoom
-function updateHist(level) {
-    var width = 500;
-    var height = 500;
-    var margin = { left: 60, right: 60, top: 30, bottom: 60 }
+function drawScatter(dots) {
+    var width = 200;
+var height = 200;
+var margin = { left: 60, right: 60, top: 30, bottom: 60 }
 
-    var svg = d3.select("#scatter svg");
+    var svg2 = d3.select('#classes')
+    .append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom);
+
+    var dotg = svg2.append('g')
+    .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+
     var x = d3.scaleLinear()
-        .domain([d3.min(newdata), d3.max(newdata)])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+        .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
         .range([0, width]);
-
-    // set the parameters for the histogram
-    var histogram = d3.histogram()
-        //.value(data.x)   // I need to give the vector of value
-        .domain(hx.domain())  // then the domain of the graphic
-        .thresholds(hx.ticks(40)); // then the numbers of bins
-
-    // And apply this function to data to get the bins
-    var bins = histogram(newdata);
-
-    // Y axis: scale and draw:
     var y = d3.scaleLinear()
+        .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
         .range([height, 0]);
-    y.domain([0, d3.max(bins, function (d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-    var colors = d3.scaleLinear()
-        .domain([0, d3.max(bins, function (d) { return d.length; })])
-        .range([d3.rgb("steelblue").brighter(), d3.rgb("steelblue").darker()]);
+    
+    var xAxis = d3.axisBottom(x);
 
-    // append the bar rectangles to the svg element
-    svg
-        .selectAll("rect")
-        .data(bins)
-        .join("rect")
-        .transition()
-        .duration(750)
-        .attr("x", d => hx(d.x0) + 1)
-        .attr("width", d => Math.max(0, hx(d.x1) - hx(d.x0) - 1))
-        .attr("y", d => hy(d.length))
-        .attr("fill", d => colors(d.length))
-        .attr("height", d => hy(0) - hy(d.length));
+    var gX = svg2.append("g")
+        .attr("transform", "translate(60," + (height + 50) + ")")
+        .call(xAxis)
+        .append("text")
+        .attr("fill", "#000")
+        .attr("x", width)
+        .attr('y', -10)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text("x");
+
+    var yAxis = d3.axisRight(y);
+
+    var gY = svg2.append("g")
+        .attr("transform", "translate(10" + ",40)")
+        .call(yAxis)
+        .append("text")
+        .attr("fill", "#000")
+        .attr("x", 0)
+        .attr("y", -5)
+        .text("y")
+        .attr("text-anchor", "start");
+
+    var scatterPlot = dotg.selectAll('circle')
+        .data(dots)
+        .enter()
+        .append('circle')
+        .attr('cx', d => x(d.x))
+        .attr('cy', d => y(d.y))
+        .attr('data-x', d => d.x)
+        .attr('data-y', d => d.y)
+        .attr("r", 5)
+        .attr('opacity', 0.5)
+        .attr("fill", "orange");
+
+        dotg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .attr('fill', 'black')
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline")  
+        .text("Class " + dots[0].c);
 }
+
