@@ -1,13 +1,15 @@
+
 (function () {
     jQuery.ajax({
         method: "GET",
         url: "get_scatter_points/",
-        success: function (data) {
-            console.log(data);
-            mainScatter(data);
+        success: function (d) {
+            console.log(d);
+            mainScatter(d);
         }
     })
 })()
+
 
 //dimensions for scatter plot
 
@@ -213,18 +215,20 @@ function mainScatter(data) {
     })
 }
 
+
 function drawScatter(dots) {
     var width = 200;
-var height = 200;
-var margin = { left: 60, right: 60, top: 30, bottom: 60 }
+    var height = 200;
+    var margin = { left: 60, right: 60, top: 30, bottom: 60 }
 
     var svg2 = d3.select('#classes')
-    .append('svg')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom);
 
     var dotg = svg2.append('g')
-    .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+        .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
+        .attr("class", "scatter");
 
     var x = d3.scaleLinear()
         .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
@@ -232,31 +236,7 @@ var margin = { left: 60, right: 60, top: 30, bottom: 60 }
     var y = d3.scaleLinear()
         .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
         .range([height, 0]);
-    
-    var xAxis = d3.axisBottom(x);
 
-    var gX = svg2.append("g")
-        .attr("transform", "translate(60," + (height + 50) + ")")
-        .call(xAxis)
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", width)
-        .attr('y', -10)
-        .attr("dy", "0.71em")
-        .attr("text-anchor", "end")
-        .text("x");
-
-    var yAxis = d3.axisRight(y);
-
-    var gY = svg2.append("g")
-        .attr("transform", "translate(10" + ",40)")
-        .call(yAxis)
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", 0)
-        .attr("y", -5)
-        .text("y")
-        .attr("text-anchor", "start");
 
     var scatterPlot = dotg.selectAll('circle')
         .data(dots)
@@ -270,13 +250,166 @@ var margin = { left: 60, right: 60, top: 30, bottom: 60 }
         .attr('opacity', 0.5)
         .attr("fill", "orange");
 
-        dotg.append("text")
-        .attr("x", (width / 2))             
+    dotg.append("text")
+        .attr("x", (width / 2))
         .attr("y", 0 - (margin.top / 2))
-        .attr("text-anchor", "middle")  
+        .attr("text-anchor", "middle")
         .attr('fill', 'black')
-        .style("font-size", "16px") 
-        .style("text-decoration", "underline")  
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
         .text("Class " + dots[0].c);
+
+    //histogram
+
+
+
+    drawHist(dots, svg2, "x");
+    drawHist(dots, svg2, "y");
 }
 
+
+function updateScatter(data, svg) {
+    var width = 200;
+    var height = 200;
+    var margin = { left: 60, right: 60, top: 30, bottom: 60 }
+
+    var dotg = svg.select("g.scatter");
+    var x = d3.scaleLinear()
+        .domain([d3.min(data, d => d.x), d3.max(data, d => d.x)])
+        .range([0, width]);
+    var y = d3.scaleLinear()
+        .domain([d3.min(data, d => d.y), d3.max(data, d => d.y)])
+        .range([height, 0]);
+
+    dotg
+        .selectAll("circle")
+        .data(data)
+        .enter()
+        .append('circle')
+        .attr("cx", d => x(d.x))
+        .attr("cy", d => y(d.y))
+        .attr("fill", "orange")
+        .attr("r", 5)
+        .attr('opacity', 0.5);
+
+    dotg.selectAll('circle')
+        .data(data)
+        .exit().remove();
+}
+
+function drawHist(dots, svg, or) {
+    var width = 200;
+    var height = 50;
+    var margin = { left: 60, right: 60, top: 30, bottom: 60 }
+
+    var totalHeight = 250 + margin.top;
+    var data = [];
+    if(or == "x") {   
+        dots.forEach(e => data.push(e.x));
+    } else {
+        dots.forEach(e => data.push(e.y));
+    }
+
+    var x = d3.scaleLinear()
+        .domain([d3.min(data), d3.max(data)])     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+        .range([0, width]);
+
+
+
+    // set the parameters for the histogram
+    var histogram = d3.histogram()
+        //.value(data.x)   // I need to give the vector of value
+        .domain(x.domain())  // then the domain of the graphic
+        .thresholds(x.ticks(40)); // then the numbers of bins
+
+    // And apply this function to data to get the bins
+    var bins = histogram(data);
+
+    // Y axis: scale and draw:
+    var y = d3.scaleLinear()
+        .range([height, 0])
+        .domain([0, d3.max(bins, function (d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+
+    var colors = d3.scaleLinear()
+        .domain([0, d3.max(bins, function (d) { return d.length; })])
+        .range([d3.rgb("steelblue").brighter(), d3.rgb("steelblue").darker()]);
+
+    // append the bar rectangles to the svg element
+    var bar = svg.append("g");
+    if (or == "x") {
+        bar.attr("transform", "translate(50,240)");
+    } else {
+        bar
+            .attr("transform", "translate(40,50) rotate(90)");
+    }
+
+    bar.selectAll("rect")
+        .data(bins)
+        .join("rect")
+        .attr("class", "rect")
+        .attr("fill", d => colors(d.length))
+        .attr("x", d => x(d.x0) + 1)
+        .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+        .attr("y", d => y(d.length))
+        .attr("height", d => y(0) - y(d.length))
+
+    const brush = d3.brushX()
+        .extent([[0, 0.5], [width, 50 ]])
+        .on("brush", brushed)
+        .on("end", brushended);
+
+    const defaultSelection = [x.range()[0], x.range()[1]];
+
+    const gb = bar
+        .call(brush)
+        .call(brush.move, defaultSelection);
+
+    function brushed() {
+        if (d3.event.selection) {
+            svg.property("value", d3.event.selection.map(x.invert, x));
+            svg.dispatch("input");
+console.log(d3.event.selection);
+            const [x0, x1] = d3.event.selection;
+            var newdata = data.filter(e => e >= x0 && e <= x1);
+            updateScatter(newdata, svg);
+        }
+    }
+
+    function brushended() {
+        if (!d3.event.selection) {
+            gb.call(brush.move, defaultSelection);
+            updateScatter(dots, svg);
+        }
+    }
+}
+/**    const brush = d3.brushX()
+        .extent([[margin.left, 0.5], [width - margin.right, 50 - margin.bottom + 0.5]])
+        .on("brush", brushed)
+        .on("end", brushended);
+
+    const defaultSelection = [x(d3.utcYear.offset(x.domain()[1], -1)), x.range()[1]];
+
+    svg2.append("g")
+        .call(xAxis, x, focusHeight);
+
+    svg.append("path")
+        .datum(data)
+        .attr("fill", "steelblue")
+        .attr("d", area(x, y.copy().range([focusHeight - margin.bottom, 4])));
+
+    const gb = svg.append("g")
+        .call(brush)
+        .call(brush.move, defaultSelection);
+
+    function brushed() {
+        if (d3.event.selection) {
+            svg.property("value", d3.event.selection.map(x.invert, x).map(d3.utcDay.round));
+            svg.dispatch("input");
+        }
+    }
+
+    function brushended() {
+        if (!d3.event.selection) {
+            gb.call(brush.move, defaultSelection);
+        }
+    } */
