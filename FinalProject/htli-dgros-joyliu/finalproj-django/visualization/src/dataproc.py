@@ -8,6 +8,9 @@ from scipy import stats
 from visualization.src.thirdparty.dynamic_array import DynamicArray
 from visualization.src.thirdparty.poission_disc_sampler import PoissonDiscSampler
 
+from colormath.color_objects import LabColor, sRGBColor
+from colormath.color_conversions import convert_color
+
 COORD_TYPE = Union[Tuple[float, float], Tuple[float, float, float]]
 
 
@@ -323,6 +326,8 @@ class ColorManager():
         # keep the one with lowest K
         for _ in range(20):
             colors = self.generate_colors(lightness, len(points))
+            # some times the sampler can't get enough colors
+            # abandon those cases
             if len(colors) < len(points):
                 continue
             cur = self.K_cost(colors, self.points, self.kde)
@@ -335,7 +340,12 @@ class ColorManager():
 
 
     def get_colors(self):
-        return self.colors
+        colors = []
+        for l, a, b in self.colors:
+            lab = LabColor(l, a, b)
+            rgb = convert_color(lab, sRGBColor)
+            colors.append(rgb.get_rgb_hex())
+        return colors
 
     
     def K_cost(
@@ -345,6 +355,7 @@ class ColorManager():
         kde: PointsKDE
     ) -> float:
         """Equation 3 in the paper
+
         only handles 2D coords"""
         n_class = len(points)
         points = self.points2np(points)
