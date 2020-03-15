@@ -399,7 +399,7 @@ class ColorManager():
         # might be wrong, but is working fine with 3 classes. 
         # It's possible for sampler to not be able to sample enough
         # colors if the threshold is too high.
-        thres = 256 * math.sin((180 / n) * math.pi / 180) * 0.55
+        thres = 256 * math.sin((180 / n) * math.pi / 180) * 0.6
         print("Color distance threshold: {}".format(thres))
         pds = PoissonDiscSampler(10, thres, 256, 256, n)
         res = pds.sample()
