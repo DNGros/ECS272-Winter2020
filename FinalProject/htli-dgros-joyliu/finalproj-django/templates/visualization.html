@@ -63,6 +63,8 @@
             /*top: 150px;
             left: 500px; */
             /*min-width: 600;*/
+            max-width: 350px;
+            float:right;
             display: inline-block;
         }
         #visualization {
@@ -111,7 +113,11 @@
         <div id="scatter">
             <div id="tools">
                 <button type="button" id="zoom">Zoom</button>
-                <button type="button" id="lasso">Lasso Select</button>
+                <button type="button" id="lasso">Lasso Selection</button>
+                <div class="slider">Point Size
+                    <input type="range" min="1" max="10" value="5" class="slider" id="pointsize">
+                    <output id="pointsize" value = "5">5</output>
+                  </div>
             </div>
             <h3>Scatter Plot</h3>
             <p>Zoom: scroll on the plot (added points will be blue)</p>

@@ -22,32 +22,48 @@ var svg1 = d3.select('#scatter')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom);
 
+var dotg = svg1.append('g')
+    .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
 
 console.log(svg1);
+var mx;
+var my;
+dots = [];
+origDots = [];
 function mainScatter(data) {
-    var dotg = svg1.append('g')
-        .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
 
     //get data
 
-    dots = [];
 
     for (i = 0; i < data.x.length; i++) {
         var dot = {
             x: data.x[i],
             y: data.y[i],
             c: data.c[i],
+            c_name: data.c_name[i],
             clr: data.clr[i],
             lvl: data.lvl[i]
         };
         dots.push(dot);
     }
-    //console.log(dots);
+
+    for (i = 0; i < data.orig_x.length; i++) {
+        var dot = {
+
+            x: data.orig_x[i],
+            y: data.orig_y[i],
+            c: data.orig_c[i],
+            c_name: data.orig_c_name[i],
+            clr: data.orig_clr[i]
+        };
+        origDots.push(dot);
+    }
+    console.log(origDots);
     //draw 
-    var x = d3.scaleLinear()
+    mx = d3.scaleLinear()
         .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
         .range([0, width]);
-    var y = d3.scaleLinear()
+    my = d3.scaleLinear()
         .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
         .range([height, 0]);
     var tip = d3.tip()
@@ -56,10 +72,11 @@ function mainScatter(data) {
         .html(function (d) {
             return "<strong>x:</strong> <span style='color:red'>" + d.x + "</span><br><strong>y:</strong> <span style='color:red'>" + d.y + "</span>";
         })
-    var xAxis = d3.axisBottom(x);
+    var xAxis = d3.axisBottom(mx);
 
     var gX = svg1.append("g")
         .attr("transform", "translate(60," + (height + 50) + ")")
+        .attr("class", "xAxis")
         .call(xAxis)
         .append("text")
         .attr("fill", "#000")
@@ -69,10 +86,11 @@ function mainScatter(data) {
         .attr("text-anchor", "end")
         .text("x");
 
-    var yAxis = d3.axisRight(y);
+    var yAxis = d3.axisRight(my);
 
     var gY = svg1.append("g")
         .attr("transform", "translate(10" + ",40)")
+        .attr("class", "yAxis")
         .call(yAxis)
         .append("text")
         .attr("fill", "#000")
@@ -90,10 +108,12 @@ function mainScatter(data) {
         .enter()
         .append('circle')
         .filter(function (d) { return d.lvl == 1 })
-        .attr('cx', d => x(d.x))
-        .attr('cy', d => y(d.y))
+        .attr('cx', d => mx(d.x))
+        .attr('cy', d => my(d.y))
         .attr('data-x', d => d.x)
         .attr('data-y', d => d.y)
+        .attr("class", "show")
+        .attr("id", d => d.c)
         .attr("r", 5)
         .attr('opacity', 0.5)
         .attr("fill", d => d.clr)
@@ -101,26 +121,43 @@ function mainScatter(data) {
         .on("mouseleave", tip.hide);
     dotg.call(tip);
 
-    //console.log(scatterPlot);
+    console.log(scatterPlot);
 
-    //views for different classes
-    var c = Array.from(new Set(data.c));
+    //small views for different classes
+    var c = Array.from(new Set(data.orig_c));
     for (i = 0; i < c.length; i++) {
-        var data = dots.filter(function (el) {
+        var data = origDots.filter(function (el) {
             return el.c == c[i];
         });
         drawScatter(data);
     }
+
+    //point size slider
+
+    d3.select("input[type=range]#pointsize").on("input", function () {
+        var size = this.value;
+        d3.select("output#pointsize").value(size).text(size);
+        dotg.selectAll("circle.show").attr("r", size);
+        console.log(dotg.selectAll("circle"));
+    });
+
     //zooming
 
     var zoom = d3.zoom()
         .scaleExtent([1, 3])
-        .translateExtent([[0, 0], [width, height]])
+        .translateExtent([[0, margin.top], [width, height]])
         .on("zoom", zoomed);
 
     //svg1.call(zoom);
     $("#zoom").on('click', function () {
+        svg1.on(".dragstart", null);
+        svg1.on(".drag", null);
+        svg1.on(".dragend", null);
         svg1.call(zoom);
+        var transform = d3.zoomIdentity
+            .translate(margin.left, margin.top)
+            .scale(1);
+        svg1.call(zoom.transform, transform);
     })
     function zoomed() {
         var level = d3.event.transform.k;
@@ -135,10 +172,12 @@ function mainScatter(data) {
                 .data(newdata)
                 .enter()
                 .append('circle')
-                .attr("cx", d => x(d.x))
-                .attr("cy", d => y(d.y))
-                .attr("fill", "blue")
-                .attr("r", 5)
+                .attr("cx", d => mx(d.x))
+                .attr("cy", d => my(d.y))
+                .attr("fill", d => d.clr)
+                .attr("class", "show")
+                .attr("id", d.c)
+                .attr("r", d3.select("input[type=range]#pointsize").value)
                 .attr('opacity', 0.5)
                 .on("mouseover", tip.show)
                 .on("mouseleave", tip.hide);
@@ -153,8 +192,8 @@ function mainScatter(data) {
         dotg.attr("transform", d3.event.transform);
         //console.log(d3.event.transform);
         //TODO: rescaling axes
-        gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
-        gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+        svg1.select(".xAxis").call(xAxis.scale(d3.event.transform.rescaleX(mx)));
+        svg1.select(".yAxis").call(yAxis.scale(d3.event.transform.rescaleY(my)));
     }
 
     //zooming ends
@@ -193,7 +232,7 @@ function mainScatter(data) {
         console.log(s._groups[0].length);
         if (s._groups[0].length == 0) {
             lasso.items()
-                .attr('fill', 'orange');
+                .attr('fill', d => d.clr);
         } else {
             lasso.notSelectedItems()
                 .attr('fill', 'white')
@@ -210,14 +249,66 @@ function mainScatter(data) {
         .on("start", lasso_start)
         .on("draw", lasso_draw)
         .on("end", lasso_end);
-    console.log(lasso);
+
     $("#lasso").on('click', function () {
+        svg1.on(".zoom", null);
         svg1.call(lasso);
     })
+
 }
 
 
-function drawScatter(dots) {
+function updateScatter(selection, c, type) {
+    var tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0])
+        .html(function (d) {
+            return "<strong>x:</strong> <span style='color:red'>" + d.x + "</span><br><strong>y:</strong> <span style='color:red'>" + d.y + "</span>";
+        })
+    xs = [];
+    selection.each(d => xs.push(d.x));
+    console.log(xs);
+    ys = [];
+    selection.each(d => ys.push(d.y));
+    console.log(ys);
+    x0 = d3.min(xs);
+    x1 = d3.max(xs);
+    y0 = d3.min(ys);
+    y1 = d3.max(ys);
+    console.log(x0 + " " + x1 + " " + y0 + " " + y1);
+    var newdata = [];
+    var level;
+    if (d3.event.transform) {
+        level = d3.event.transform.k;
+    } else {
+        level = 1;
+    }
+
+    newdata = dots.filter(e => e.x >= x0 && e.x <= x1 && e.y >= y0 && e.y <= y1 && e.lvl <= level && e.c == c);
+
+    console.log(document.getElementsByTagName("output")[0].value);
+    var update = d3.select("#scatter > svg > g").selectAll("circle[id='" + c + "']")
+    .data(newdata);
+
+    update
+            .enter()
+            .append('circle')
+            .attr("cx", d => mx(d.x))
+            .attr("cy", d => my(d.y))
+            .attr("fill", d => d.clr)
+            .attr("class", "show")
+            .attr("id", d => d.c)
+            .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
+            .attr('opacity', 0.5)
+            .on("mouseover", tip.show)
+            .on("mouseleave", tip.hide);
+
+            update.exit().remove();
+    console.log(newdata);
+}
+
+
+function drawScatter(origDots) {
     var width = 200;
     var height = 200;
     var margin = { left: 60, right: 60, top: 30, bottom: 60 }
@@ -225,23 +316,24 @@ function drawScatter(dots) {
     var svg2 = d3.select('#classes')
         .append('svg')
         .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom);
+        .attr('height', height + margin.top + margin.bottom)
+        .attr("class", origDots[0].c);
 
     var dotg = svg2.append('g')
         .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
         .attr("class", "scatter");
 
     var x = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
+        .domain([d3.min(origDots, d => d.x), d3.max(origDots, d => d.x)])
         .range([0, width]);
 
     var y = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
+        .domain([d3.min(origDots, d => d.y), d3.max(origDots, d => d.y)])
         .range([height, 0]);
 
     console.log(x.domain()[0] + " " + x.domain()[1]);
     var scatterPlot = dotg.selectAll('circle')
-        .data(dots)
+        .data(origDots)
         .enter()
         .append('circle')
         .attr('cx', d => x(d.x))
@@ -263,50 +355,17 @@ function drawScatter(dots) {
         .attr('fill', 'black')
         .style("font-size", "16px")
         .style("text-decoration", "underline")
-        .text("Class " + dots[0].c);
+        .text(origDots[0].c_name);
 
     //histogram
 
 
 
-    drawHist(dots, svg2, "x");
-    drawHist(dots, svg2, "y");
+    drawHist(origDots, svg2, "x");
+    drawHist(origDots, svg2, "y");
 }
 
 
-function updateScatter(dots, data, svg) {
-    var width = 200;
-    var height = 200;
-    var margin = { left: 60, right: 60, top: 30, bottom: 60 }
-
-    console.log(data);
-    var dotg = svg.select("g.scatter");
-    var x = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
-        .range([0, width]);
-    var y = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
-        .range([height, 0]);
-    //console.log(dotg.selectAll("circle"));
-
-    var circles = dotg.selectAll("circle").data(data);
-    console.log(x.domain()[0] + " " + x.domain()[1]);
-    circles
-        .enter()
-        .append('circle')
-        .attr("cx", function (d) { console.log(x(d.x)); return x(d.x); })
-        .attr("cy", d => y(d.y))
-        .attr('data-x', d => d.x)
-        .attr('data-y', d => d.y)
-        .attr("fill", d => d.clr)
-        .attr("r", 5)
-        .attr('opacity', 0.5);
-    // console.log(dotg.selectAll("circle"));
-
-    circles
-        .exit().remove();
-    console.log(dotg.selectAll("circle"));
-}
 
 function drawHist(dots, svg, or) {
     var width = 200;
@@ -324,14 +383,14 @@ function drawHist(dots, svg, or) {
 
     var x = d3.scaleLinear()
     // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
-       if(or == "x") { 
+    if (or == "x") {
         x.domain([d3.min(data), d3.max(data)])
-        .range([0, width]);
-       } else {
-           x        
-           .domain([d3.min(data), d3.max(data)]) 
-           .range([0,width]);
-       }
+            .range([0, width]);
+    } else {
+        x
+            .domain([d3.min(data), d3.max(data)])
+            .range([0, width]);
+    }
 
 
 
@@ -377,7 +436,7 @@ function drawHist(dots, svg, or) {
         .on("brush", brushed)
         .on("end", brushended);
 
-    const defaultSelection = [x.range()[0], x.range()[1]];
+    const defaultSelection = [50, 150];
 
     const gb = bar
         .call(brush)
@@ -390,11 +449,12 @@ function drawHist(dots, svg, or) {
 
             const [x0, x1] = d3.event.selection;
             console.log(svg.select("g.scatter").selectAll("circle"));
-            var notselected;
+
             if (or == "x") {
                 var selected = svg.select("g.scatter").selectAll("circle.y_selected");
                 //var notselected = svg.select("g.scatter").selectAll("circle.not_selected");
                 selected.each(function (d, i) {
+                    c = d.c;
                     //console.log(d.className.baseVal);
                     if (d.x >= x.invert(x0) && d.x <= x.invert(x1)) {
                         d3.select(this)
@@ -403,19 +463,17 @@ function drawHist(dots, svg, or) {
                             .attr("fill", d.clr);
                     } else {
                         d3.select(this)
-                          .classed("x_selected", false)
-                          .attr("fill", "grey");
+                            .classed("x_selected", false)
+                            .attr("fill", "grey");
                     }
                 });
 
-
+                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"), "x");
 
             } else {
-                var color;
                 var selected = svg.select("g.scatter").selectAll("circle.x_selected");
                 //var notselected = svg.select("g.scatter").selectAll("circle.not_selected");
                 selected.each(function (d, i) {
-                    color = d.clr;
                     //console.log(d.className.baseVal);
                     if (d.y >= x.invert(x0) && d.y <= x.invert(x1)) {
                         d3.select(this)
@@ -424,13 +482,15 @@ function drawHist(dots, svg, or) {
                             .attr("fill", d.clr);
                     } else {
                         d3.select(this)
-                          .classed("y_selected", false)
-                          .attr("fill", 'grey');
+                            .classed("y_selected", false)
+                            .attr("fill", 'grey');
                     }
                 });
+
+                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"), "y");
             }
             console.log(x.invert(x0) + " " + x.invert(x1));
-            console.log(notselected);
+            //console.log(notselected);
             console.log(dots);
             //updateScatter(dots, newdata, svg);
             //notselected.attr("fill", "grey");
@@ -442,7 +502,7 @@ function drawHist(dots, svg, or) {
             gb.call(brush.move, defaultSelection);
             //updateScatter(dots, dots, svg);
             //svg.selectAll("circle")
-                //.classed("selected", true);
+            //.classed("selected", true);
 
         }
     }
