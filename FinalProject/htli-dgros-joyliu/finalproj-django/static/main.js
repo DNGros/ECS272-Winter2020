@@ -37,6 +37,7 @@ function mainScatter(data) {
             x: data.x[i],
             y: data.y[i],
             c: data.c[i],
+            clr: data.clr[i],
             lvl: data.lvl[i]
         };
         dots.push(dot);
@@ -95,7 +96,7 @@ function mainScatter(data) {
         .attr('data-y', d => d.y)
         .attr("r", 5)
         .attr('opacity', 0.5)
-        .attr("fill", "orange")
+        .attr("fill", d => d.clr)
         .on("mouseover", tip.show)
         .on("mouseleave", tip.hide);
     dotg.call(tip);
@@ -247,11 +248,13 @@ function drawScatter(dots) {
         .attr('cy', d => y(d.y))
         .attr('data-x', d => d.x)
         .attr('data-y', d => d.y)
+        .attr("data-clr", d => d.clr)
         .attr("r", 5)
         .attr('opacity', 0.5)
-        .attr("fill", "grey")
         .classed("x_selected", true)
-        .classed("y_selected", true);
+        .classed("y_selected", true)
+        .attr("fill", d => d.clr)
+
 
     dotg.append("text")
         .attr("x", (width / 2))
@@ -295,7 +298,7 @@ function updateScatter(dots, data, svg) {
         .attr("cy", d => y(d.y))
         .attr('data-x', d => d.x)
         .attr('data-y', d => d.y)
-        .attr("fill", "orange")
+        .attr("fill", d => d.clr)
         .attr("r", 5)
         .attr('opacity', 0.5);
     // console.log(dotg.selectAll("circle"));
@@ -396,30 +399,35 @@ function drawHist(dots, svg, or) {
                     if (d.x >= x.invert(x0) && d.x <= x.invert(x1)) {
                         d3.select(this)
                             //.classed("selected", true)
-                            .classed("x_selected", true);
+                            .classed("x_selected", true)
+                            .attr("fill", d.clr);
                     } else {
                         d3.select(this)
-                          .classed("x_selected", false);
+                          .classed("x_selected", false)
+                          .attr("fill", "grey");
                     }
                 });
 
 
 
             } else {
+                var color;
                 var selected = svg.select("g.scatter").selectAll("circle.x_selected");
                 //var notselected = svg.select("g.scatter").selectAll("circle.not_selected");
                 selected.each(function (d, i) {
+                    color = d.clr;
                     //console.log(d.className.baseVal);
                     if (d.y >= x.invert(x0) && d.y <= x.invert(x1)) {
                         d3.select(this)
                             //.classed("selected", true)
-                            .classed("y_selected", true);
+                            .classed("y_selected", true)
+                            .attr("fill", d.clr);
                     } else {
                         d3.select(this)
-                          .classed("y_selected", false);
+                          .classed("y_selected", false)
+                          .attr("fill", 'grey');
                     }
                 });
-
             }
             console.log(x.invert(x0) + " " + x.invert(x1));
             console.log(notselected);
