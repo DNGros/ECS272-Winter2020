@@ -13,17 +13,20 @@
 
 //dimensions for scatter plot
 
-var width = 500;
-var height = 500;
-var margin = { left: 60, right: 60, top: 30, bottom: 60 }
+
+var width = 600;
+var height = 400;
+var margin = { left: 60, right: 20, top: 20, bottom: 60 }
 
 var svg1 = d3.select('#scatter')
     .append('svg')
     .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom);
+    .attr('height', height + margin.top + margin.bottom)
+    ;
 
-var dotg = svg1.append('g')
-    .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+var dotg = svg1.append("g")
+    .attr("class", "dots")
+    //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 console.log(svg1);
 var mx;
@@ -62,10 +65,10 @@ function mainScatter(data) {
     //draw 
     mx = d3.scaleLinear()
         .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
-        .range([0, width]);
+        .range([0, width+margin.left+margin.right]);
     my = d3.scaleLinear()
         .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
-        .range([height, 0]);
+        .range([height+margin.top+margin.bottom, 0]);
     var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
@@ -74,30 +77,9 @@ function mainScatter(data) {
         })
     var xAxis = d3.axisBottom(mx);
 
-    var gX = svg1.append("g")
-        .attr("transform", "translate(60," + (height + 50) + ")")
-        .attr("class", "xAxis")
-        .call(xAxis)
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", width)
-        .attr('y', -10)
-        .attr("dy", "0.71em")
-        .attr("text-anchor", "end")
-        .text("x");
-
     var yAxis = d3.axisRight(my);
 
-    var gY = svg1.append("g")
-        .attr("transform", "translate(10" + ",40)")
-        .attr("class", "yAxis")
-        .call(yAxis)
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", 0)
-        .attr("y", -5)
-        .text("y")
-        .attr("text-anchor", "start");
+
 
     var colors = d3.scaleLinear()
         .domain([0, d3.max(data.c)])
@@ -116,12 +98,35 @@ function mainScatter(data) {
         .attr("id", d => d.c)
         .attr("r", 5)
         .attr('opacity', 0.5)
-        .attr("fill", d => d.clr)
-        .on("mouseover", tip.show)
-        .on("mouseleave", tip.hide);
-    dotg.call(tip);
+        .attr("fill", d => d.clr);
+    //dotg.call(tip);
 
     console.log(scatterPlot);
+    // x axis
+    var gX = svg1.append("g")
+        .attr("transform", "translate(0," + (height+margin.bottom) + ")")
+        .call(xAxis)
+        .attr("class", "xAxis")
+        .append("text")
+        .attr("fill", "#000")
+        .attr("x", width / 2)
+        .attr('y', margin.bottom / 2)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text("x");
+
+    // y axis
+    var gY = svg1.append("g")
+        .call(yAxis)
+        .attr("class", "yAxis")
+        .append("text")
+        .attr("fill", "#000")
+        .attr("transform", "rotate(-90)")
+        .attr("x", - height / 2)
+        .attr("y", - margin.left)
+        .attr("dy", "0.71em")
+        .attr("text-anchor", "end")
+        .text("y");
 
     //small views for different classes
     var c = Array.from(new Set(data.orig_c));
@@ -136,7 +141,7 @@ function mainScatter(data) {
 
     d3.select("input[type=range]#pointsize").on("input", function () {
         var size = this.value;
-        d3.select("output#pointsize").value(size).text(size);
+        d3.select("output#pointsize").text(size);
         dotg.selectAll("circle.show").attr("r", size);
         console.log(dotg.selectAll("circle"));
     });
@@ -145,7 +150,7 @@ function mainScatter(data) {
 
     var zoom = d3.zoom()
         .scaleExtent([1, 3])
-        .translateExtent([[0, margin.top], [width, height]])
+        //.translateExtent([[0,0], [width-margin.left, height-margin.top]])
         .on("zoom", zoomed);
 
     //svg1.call(zoom);
@@ -157,7 +162,7 @@ function mainScatter(data) {
         var transform = d3.zoomIdentity
             .translate(margin.left, margin.top)
             .scale(1);
-        svg1.call(zoom.transform, transform);
+        //dotg.call(zoom.transform, transform);
     })
     function zoomed() {
         var level = d3.event.transform.k;
@@ -166,34 +171,38 @@ function mainScatter(data) {
         })
         //console.log(level);
         //console.log(newdata);
-        scatterPlot =
-            dotg
-                .selectAll("circle")
-                .data(newdata)
-                .enter()
-                .append('circle')
-                .attr("cx", d => mx(d.x))
-                .attr("cy", d => my(d.y))
-                .attr("fill", d => d.clr)
-                .attr("class", "show")
-                .attr("id", d.c)
-                .attr("r", d3.select("input[type=range]#pointsize").value)
-                .attr('opacity', 0.5)
-                .on("mouseover", tip.show)
-                .on("mouseleave", tip.hide);
+        /* scatterPlot =
+             svg1.select(".dots").selectAll("circle")
+                 .data(newdata);
+                 scatterPlot
+                 .join('circle')
+                 .attr("cx", d => mx(d.x))
+                 .attr("cy", d => my(d.y))
+                 .attr("fill", d => d.clr)
+                 .attr("class", "show")
+                 .attr("id", d => d.c)
+                 .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
+                 .attr('opacity', 0.5);
+ 
+                 svg1.select(".dots").selectAll("circle")
+             .data(newdata)
+             .exit().remove();
+ */
 
-        dotg.selectAll('circle')
-            .data(newdata)
-            .exit().remove();
-
+        for (i = 0; i < c.length; i++) {
+            updateScatter(svg1.select(".dots").selectAll("circle[id='" + c + "']"), c);
+        }
         s = d3.selectAll("circle");
+
         //console.log(s);
 
-        dotg.attr("transform", d3.event.transform);
+        svg1.select(".dots").attr("transform", d3.event.transform);
         //console.log(d3.event.transform);
         //TODO: rescaling axes
         svg1.select(".xAxis").call(xAxis.scale(d3.event.transform.rescaleX(mx)));
+        //.attr("transform", "translate(60," + (height + 50) + ")");
         svg1.select(".yAxis").call(yAxis.scale(d3.event.transform.rescaleY(my)));
+        //.attr("transform", "translate(10" + ",40)");
     }
 
     //zooming ends
@@ -226,7 +235,7 @@ function mainScatter(data) {
             .classed("possible", false);
         lasso.selectedItems()
             .classed("selected", true)
-            //.attr('fill', 'orange')
+            .attr('fill', d => d.clr)
             .attr("r", 8);
         s = lasso.selectedItems();
         console.log(s._groups[0].length);
@@ -240,7 +249,7 @@ function mainScatter(data) {
         }
     };
     //console.log(circles[0]);
-    var s = dotg.selectAll('circle');
+    var s = svg1.selectAll('circle');
     const lasso = d3.lasso()
         .closePathDistance(305)
         .closePathSelect(true)
@@ -258,24 +267,19 @@ function mainScatter(data) {
 }
 
 
-function updateScatter(selection, c, type) {
-    var tip = d3.tip()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0])
-        .html(function (d) {
-            return "<strong>x:</strong> <span style='color:red'>" + d.x + "</span><br><strong>y:</strong> <span style='color:red'>" + d.y + "</span>";
-        })
+function updateScatter(selection, c) {
+
     xs = [];
     selection.each(d => xs.push(d.x));
-    console.log(xs);
+
     ys = [];
     selection.each(d => ys.push(d.y));
-    console.log(ys);
+
     x0 = d3.min(xs);
     x1 = d3.max(xs);
     y0 = d3.min(ys);
     y1 = d3.max(ys);
-    console.log(x0 + " " + x1 + " " + y0 + " " + y1);
+
     var newdata = [];
     var level;
     if (d3.event.transform) {
@@ -286,25 +290,21 @@ function updateScatter(selection, c, type) {
 
     newdata = dots.filter(e => e.x >= x0 && e.x <= x1 && e.y >= y0 && e.y <= y1 && e.lvl <= level && e.c == c);
 
-    console.log(document.getElementsByTagName("output")[0].value);
+
     var update = d3.select("#scatter > svg > g").selectAll("circle[id='" + c + "']")
-    .data(newdata);
-
+        .data(newdata);
+    update.exit().remove();
     update
-            .enter()
-            .append('circle')
-            .attr("cx", d => mx(d.x))
-            .attr("cy", d => my(d.y))
-            .attr("fill", d => d.clr)
-            .attr("class", "show")
-            .attr("id", d => d.c)
-            .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
-            .attr('opacity', 0.5)
-            .on("mouseover", tip.show)
-            .on("mouseleave", tip.hide);
+        .join('circle')
+        .attr("class", "show")
+        .attr("fill", d => d.clr)
+        .attr("id", d => d.c)
+        .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
+        .attr('opacity', 0.5)
+        .attr("cx", d => mx(d.x))
+        .attr("cy", d => my(d.y));
 
-            update.exit().remove();
-    console.log(newdata);
+    //console.log(newdata);
 }
 
 
@@ -468,7 +468,7 @@ function drawHist(dots, svg, or) {
                     }
                 });
 
-                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"), "x");
+                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"));
 
             } else {
                 var selected = svg.select("g.scatter").selectAll("circle.x_selected");
@@ -487,7 +487,7 @@ function drawHist(dots, svg, or) {
                     }
                 });
 
-                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"), "y");
+                updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"));
             }
             console.log(x.invert(x0) + " " + x.invert(x1));
             //console.log(notselected);
