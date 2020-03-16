@@ -68,10 +68,11 @@ def sample_data(
     zoom_level = initial_zoom_level
     num_classes = len(data)
     out_data = []
-    added_points_dist_tracker = DistQueriablePointTracker(num_classes)
+    # added_points_dist_tracker = DistQueriablePointTracker(num_classes)
     kde = PointsKDE(data)
     num_points = sum(len(cl_points) for cl_points in data)
     while not data_sampler.is_empty() and zoom_level <= max_zoom_level:
+        added_points_dist_tracker = DistQueriablePointTracker(num_classes)
         # Find w based off equation 2
         # NOTE: This isn't the exact same as the equation. Using that equation
         # seems to agressive with removing points in the sparser regions.

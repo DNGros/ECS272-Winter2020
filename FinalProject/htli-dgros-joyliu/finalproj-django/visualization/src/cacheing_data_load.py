@@ -44,7 +44,7 @@ def build_sample_dict(
     samples = sample_data(
         data=scat_points,
         initial_zoom_level=1,
-        max_zoom_level=1,
+        max_zoom_level=4,
         point_radius=point_radius
     )
     end_time = time.time()
