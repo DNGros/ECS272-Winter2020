@@ -46,7 +46,7 @@ function scaleRadius(r) {
 function mainScatter(data) {
 
     //get data
-
+var lvls = [0, 4,2,0,1];
 
     for (i = 0; i < data.x.length; i++) {
         var dot = {
@@ -55,7 +55,7 @@ function mainScatter(data) {
             c: data.c[i],
             c_name: data.c_name[i],
             clr: data.clr[i],
-            lvl: data.lvl[i]
+            lvl: lvls[data.lvl[i]]
         };
         dots.push(dot);
     }
@@ -178,6 +178,8 @@ function mainScatter(data) {
         newdata = dots.filter(function (e) {
             return e.lvl <= level;
         })
+        d3.select("output#zoomlevel").text(level);
+        d3.select("output#zoomlevel").property("value", level);
         //console.log(level);
         //console.log(newdata);
         /* scatterPlot =
@@ -199,10 +201,10 @@ function mainScatter(data) {
  */
 
         for (i = 0; i < c.length; i++) {
-            updateScatter(svg1.select(".dots").selectAll("circle[id='" + c + "']"), c);
+            console.log(svg1.select(".dots").selectAll("circle[id='" + c[i] + "']"));
+            updateScatter(svg1.select(".dots").selectAll("circle[id='" + c[i] + "']"), c[i]);
         }
         
-        console.log(svg1.select(".dots").selectAll("circle"));
         svg1.select(".dots").selectAll("circle")
         .attr("r", 5/level);
         //console.log(s);
@@ -293,13 +295,8 @@ function updateScatter(selection, c) {
     y1 = d3.max(ys);
 
     var newdata = [];
-    var level;
-    if (d3.event.transform) {
-        level = d3.event.transform.k;
-    } else {
-        level = 1;
-    }
-
+    var level = d3.select("output#zoomlevel")._groups[0][0].value;
+    console.log(level);
     newdata = dots.filter(e => e.x >= x0 && e.x <= x1 && e.y >= y0 && e.y <= y1 && e.lvl <= level && e.c == c);
 
 
@@ -316,7 +313,7 @@ function updateScatter(selection, c) {
         .attr("r", 5 / level)
         .attr('opacity', mainOpacity);
 
-        //update.exit().remove();
+    update.exit().remove();
     console.log(newdata);
 }
 
@@ -520,34 +517,3 @@ function drawHist(dots, svg, or) {
         }
     }
 }
-/**    const brush = d3.brushX()
-        .extent([[margin.left, 0.5], [width - margin.right, 50 - margin.bottom + 0.5]])
-        .on("brush", brushed)
-        .on("end", brushended);
-
-    const defaultSelection = [x(d3.utcYear.offset(x.domain()[1], -1)), x.range()[1]];
-
-    svg2.append("g")
-        .call(xAxis, x, focusHeight);
-
-    svg.append("path")
-        .datum(data)
-        .attr("fill", "steelblue")
-        .attr("d", area(x, y.copy().range([focusHeight - margin.bottom, 4])));
-
-    const gb = svg.append("g")
-        .call(brush)
-        .call(brush.move, defaultSelection);
-
-    function brushed() {
-        if (d3.event.selection) {
-            svg.property("value", d3.event.selection.map(x.invert, x).map(d3.utcDay.round));
-            svg.dispatch("input");
-        }
-    }
-
-    function brushended() {
-        if (!d3.event.selection) {
-            gb.call(brush.move, defaultSelection);
-        }
-    } */
