@@ -4,6 +4,7 @@ import math
 from typing import Tuple, List, Dict, Union
 import numpy as np
 from scipy import stats
+from tqdm import tqdm
 
 from visualization.src.thirdparty.dynamic_array import DynamicArray
 from visualization.src.thirdparty.poission_disc_sampler import PoissonDiscSampler
@@ -84,6 +85,11 @@ def sample_data(
         # Store the examples which don't pass so can repopulate at next zoom level.
         #   This is equivalent to P'' in the paper's pseudocode.
         failed_examples = []
+        # Make a pbar. (not in paper pseudo code obviously)
+        pbar = tqdm(
+            total=data_sampler.num_points(),
+            desc=f"Sampling Points for zoom level {zoom_level} (max zoom level {max_zoom_level})"
+        )
         while not data_sampler.is_empty():
             # Select a trial sample from the most unfilled data class
             point = data_sampler.sample_least_filled()
@@ -95,6 +101,7 @@ def sample_data(
                 added_points_dist_tracker.add_point(point)
             else:
                 failed_examples.append(point)
+            pbar.update(1)
         out_data.append((zoom_level, this_zoom_data))
         # 16: Push P''' back to P
         data_sampler.repopulate(failed_examples)
@@ -197,7 +204,11 @@ class PointsKDE:
         self._num_classes = len(points_by_class)
         self._num_points_by_class = []
         all_desnities = []
-        for class_id, points in enumerate(points_by_class):
+        for class_id, points in tqdm(
+            enumerate(points_by_class),
+            desc="Performing KDE for each class",
+            total=len(points_by_class)
+        ):
             parray = convert_points_to_np(points)  # (point, coord_dim)
             kernel = stats.gaussian_kde(parray.T, bw_method='silverman')
             self._kde_kernels.append(kernel)
@@ -206,7 +217,7 @@ class PointsKDE:
                 self.density_at(class_id, point.coord) for point in points
             ]
             #print("Class", class_id, "densities", this_class_densities)
-            print("Bandwidth", self._kde_kernels[class_id].factor)
+            #print("Bandwidth", self._kde_kernels[class_id].factor)
             all_desnities.extend(this_class_densities)
         self._mean_density = float(np.mean(all_desnities))
 
@@ -400,7 +411,7 @@ class ColorManager():
         # It's possible for sampler to not be able to sample enough
         # colors if the threshold is too high.
         thres = 256 * math.sin((180 / n) * math.pi / 180) * 0.6
-        print("Color distance threshold: {}".format(thres))
+        #print("Color distance threshold: {}".format(thres))
         pds = PoissonDiscSampler(10, thres, 256, 256, n)
         res = pds.sample()
         # change type to list

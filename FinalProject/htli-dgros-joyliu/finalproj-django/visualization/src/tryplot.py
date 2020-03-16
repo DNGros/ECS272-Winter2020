@@ -4,7 +4,7 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
 #import seaborn as sns
 
-from src.dataproc import convert_points_to_np, convert_np_to_points, sample_data, \
+from visualization.src.dataproc import convert_points_to_np, convert_np_to_points, sample_data, \
     convert_examples_by_class_to_np
 
 
