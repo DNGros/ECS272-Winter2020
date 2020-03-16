@@ -158,7 +158,7 @@ function mainScatter(data) {
     //zooming
 
     var zoom = d3.zoom()
-        .scaleExtent([1, 3])
+        .scaleExtent([1, 4])
         //.translateExtent([[0,0], [width-margin.left, height-margin.top]])
         .on("zoom", zoomed);
 
@@ -201,8 +201,10 @@ function mainScatter(data) {
         for (i = 0; i < c.length; i++) {
             updateScatter(svg1.select(".dots").selectAll("circle[id='" + c + "']"), c);
         }
-        s = d3.selectAll("circle");
-
+        
+        console.log(svg1.select(".dots").selectAll("circle"));
+        svg1.select(".dots").selectAll("circle")
+        .attr("r", 5/level);
         //console.log(s);
 
         svg1.select(".dots").attr("transform", d3.event.transform);
@@ -278,6 +280,7 @@ function mainScatter(data) {
 
 function updateScatter(selection, c) {
 
+    console.log(selection);
     xs = [];
     selection.each(d => xs.push(d.x));
 
@@ -300,22 +303,21 @@ function updateScatter(selection, c) {
     newdata = dots.filter(e => e.x >= x0 && e.x <= x1 && e.y >= y0 && e.y <= y1 && e.lvl <= level && e.c == c);
 
 
-    var update = d3.select("#scatter > svg > g").selectAll("circle[id='" + c + "']")
+    var update = svg1.select(".dots").selectAll("circle[id='" + c + "']")
         .data(newdata);
-    update.exit().remove();
+
     update
         .join('circle')
         .attr("class", "show")
+        .attr("cx", d => mx(d.x))
+        .attr("cy", d => my(d.y))
         .attr("fill", d => d.clr)
         .attr("id", d => d.c)
-        .attr("r", scaleRadius(
-            parseFloat(document.getElementsByTagName("output")[0].value))
-        )
-        .attr('opacity', mainOpacity)
-        .attr("cx", d => mx(d.x))
-        .attr("cy", d => my(d.y));
+        .attr("r", 5 / level)
+        .attr('opacity', mainOpacity);
 
-    //console.log(newdata);
+        //update.exit().remove();
+    console.log(newdata);
 }
 
 
