@@ -267,7 +267,12 @@ def get_closest_acceptable_dist(
     )
     # Put a hard limit on how close can overlap. The actual paper does not do
     # this, but it seems to be in the spirit of the actual goal.
-    acceptable_dists = tuple(max(dist, point_radius*0.7) for dist in acceptable_dists)
+    in_class_min = 1.25
+    out_class_min = 1.6
+    acceptable_dists = tuple(
+        max(dist, point_radius*(in_class_min if i == data_point.class_id else out_class_min))
+        for i, dist in enumerate(acceptable_dists)
+    )
     return acceptable_dists
 
 

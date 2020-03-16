@@ -14,9 +14,12 @@
 //dimensions for scatter plot
 
 
-var width = 600;
-var height = 400;
-var margin = { left: 60, right: 20, top: 20, bottom: 60 }
+var width = 500;
+var height = 500;
+var margin = { left: 60, right: 20, top: 20, bottom: 60 };
+var defaultRadius = 0.05;
+var mainOpacity = 1;
+//var radiusStepdown = defaultRadius / (0.1 / 2);
 
 var svg1 = d3.select('#scatter')
     .append('svg')
@@ -25,7 +28,7 @@ var svg1 = d3.select('#scatter')
     ;
 
 var dotg = svg1.append("g")
-    .attr("class", "dots")
+    .attr("class", "dots");
     //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 console.log(svg1);
@@ -33,6 +36,13 @@ var mx;
 var my;
 dots = [];
 origDots = [];
+
+function scaleRadius(r) {
+    let axisDif = mx(1) - mx(0);
+    console.log("SCALE RADIUS " + axisDif + " " + r);
+    return r * axisDif;
+}
+
 function mainScatter(data) {
 
     //get data
@@ -62,12 +72,14 @@ function mainScatter(data) {
         origDots.push(dot);
     }
     console.log(origDots);
-    //draw 
+    //draw
+    // The domain should be shared so that way radius is meaningful in both dims
+    shared_domain = [d3.min(dots, d => Math.min(d.x, d.y)), d3.max(dots, d => Math.max(d.x, d.y))];
     mx = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.x), d3.max(dots, d => d.x)])
+        .domain(shared_domain)
         .range([0, width+margin.left+margin.right]);
     my = d3.scaleLinear()
-        .domain([d3.min(dots, d => d.y), d3.max(dots, d => d.y)])
+        .domain(shared_domain)
         .range([height+margin.top+margin.bottom, 0]);
     var tip = d3.tip()
         .attr('class', 'd3-tip')
@@ -76,10 +88,7 @@ function mainScatter(data) {
             return "<strong>x:</strong> <span style='color:red'>" + d.x + "</span><br><strong>y:</strong> <span style='color:red'>" + d.y + "</span>";
         })
     var xAxis = d3.axisBottom(mx);
-
     var yAxis = d3.axisRight(my);
-
-
 
     var colors = d3.scaleLinear()
         .domain([0, d3.max(data.c)])
@@ -96,8 +105,8 @@ function mainScatter(data) {
         .attr('data-y', d => d.y)
         .attr("class", "show")
         .attr("id", d => d.c)
-        .attr("r", 5)
-        .attr('opacity', 0.5)
+        .attr("r", scaleRadius(defaultRadius))
+        .attr('opacity', mainOpacity)
         .attr("fill", d => d.clr);
     //dotg.call(tip);
 
@@ -142,7 +151,7 @@ function mainScatter(data) {
     d3.select("input[type=range]#pointsize").on("input", function () {
         var size = this.value;
         d3.select("output#pointsize").text(size);
-        dotg.selectAll("circle.show").attr("r", size);
+        dotg.selectAll("circle.show").attr("r", scaleRadius(size));
         console.log(dotg.selectAll("circle"));
     });
 
@@ -299,8 +308,10 @@ function updateScatter(selection, c) {
         .attr("class", "show")
         .attr("fill", d => d.clr)
         .attr("id", d => d.c)
-        .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
-        .attr('opacity', 0.5)
+        .attr("r", scaleRadius(
+            parseFloat(document.getElementsByTagName("output")[0].value))
+        )
+        .attr('opacity', mainOpacity)
         .attr("cx", d => mx(d.x))
         .attr("cy", d => my(d.y));
 

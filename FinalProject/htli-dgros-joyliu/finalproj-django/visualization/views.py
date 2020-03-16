@@ -28,10 +28,10 @@ def get_scatter_points(request):
     ~Currently a test without zoom-in feature~
     """
     # For debugging we won't use all the points
-    debug_subset_size: int = 5_000  # Set to None to include all points
+    debug_subset_size: int = None  # Set to None to include all points
 
     data = get_person_activity_sampled_json(
-        point_radius=0.1,  # This might need to be adjusted.
+        point_radius=0.05,  # This might need to be adjusted.
         debug_subset_size=debug_subset_size
     )
     return JsonResponse(data)
