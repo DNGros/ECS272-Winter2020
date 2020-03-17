@@ -337,7 +337,7 @@ class ColorManager():
         self.colors = []
 
         lightness = 50
-        cur_min = None
+        cur_max = None
 
         # generate color 20 times
         # keep the one with lowest K
@@ -348,11 +348,11 @@ class ColorManager():
             if len(colors) < len(points):
                 continue
             cur = self.K_cost(colors, self.points, self.kde)
-            if not cur_min:
-                cur_min = cur
+            if not cur_max:
+                cur_max = cur
                 self.colors = colors
-            elif cur_min > cur:
-                cur_min = cur
+            elif cur_max < cur:
+                cur_max = cur
                 self.colors = colors
 
 
