@@ -1,4 +1,3 @@
-
 (function () {
     jQuery.ajax({
         method: "GET",
@@ -10,17 +9,13 @@
     })
 })()
 
-
 //dimensions for scatter plot
-
-
 var width = 500;
 var height = 500;
 var margin = { left: 60, right: 20, top: 20, bottom: 60 };
 var defaultRadius = 0.05;
 var currentPointSize = defaultRadius;
 var mainOpacity = 1;
-//var radiusStepdown = defaultRadius / (0.1 / 2);
 
 var svg1 = d3.select('#scatter')
     .append('svg')
@@ -30,7 +25,6 @@ var svg1 = d3.select('#scatter')
 
 var dotg = svg1.append("g")
     .attr("class", "dots");
-    //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 console.log(svg1);
 var mx;
@@ -41,19 +35,16 @@ dots = [];
 origDots = [];
 
 function scaleRadius(r) {
-    //console.log("SCALE RADIUS " + axisDif + " " + r);
     return r * axisDif;
 }
 
-function setPointSizeDisplay(){
+function setPointSizeDisplay() {
     d3.select("output#pointsize").text(currentPointSize);
 }
 
+//rendering the main scatter plot
 function mainScatter(data) {
-
     //get data
-    //var lvls = [0, 4,2,0,1];
-
     for (i = 0; i < data.x.length; i++) {
         var dot = {
             x: data.x[i],
@@ -77,27 +68,21 @@ function mainScatter(data) {
         };
         origDots.push(dot);
     }
-    console.log(origDots);
+
     //draw
     // The domain should be shared so that way radius is meaningful in both dims
     shared_domain = [d3.min(dots, d => Math.min(d.x, d.y)), d3.max(dots, d => Math.max(d.x, d.y))];
     mx = d3.scaleLinear()
         .domain(shared_domain)
-        .range([0, width+margin.left+margin.right]);
+        .range([0, width + margin.left + margin.right]);
     my = d3.scaleLinear()
         .domain(shared_domain)
-        .range([height+margin.top+margin.bottom, 0]);
+        .range([height + margin.top + margin.bottom, 0]);
     axisDif = mx(1) - mx(0);
     level = 1.0;
 
     setPointSizeDisplay();
 
-    var tip = d3.tip()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0])
-        .html(function (d) {
-            return "<strong>x:</strong> <span style='color:red'>" + d.x + "</span><br><strong>y:</strong> <span style='color:red'>" + d.y + "</span>";
-        })
     var xAxis = d3.axisBottom(mx);
     var yAxis = d3.axisRight(my);
 
@@ -119,11 +104,10 @@ function mainScatter(data) {
         .attr("r", scaleRadius(currentPointSize / level))
         .attr('opacity', mainOpacity)
         .attr("fill", d => d.clr);
-    //dotg.call(tip);
-    console.log(scatterPlot);
+
     // x axis
     var gX = svg1.append("g")
-        .attr("transform", "translate(0," + (height+margin.bottom) + ")")
+        .attr("transform", "translate(0," + (height + margin.bottom) + ")")
         .call(xAxis)
         .attr("class", "xAxis")
         .append("text")
@@ -157,7 +141,6 @@ function mainScatter(data) {
     }
 
     //point size slider
-
     d3.select("#pointsize-slider").on("input", function () {
         currentPointSize = this.value;
         setPointSizeDisplay();
@@ -165,73 +148,41 @@ function mainScatter(data) {
     });
 
     //zooming
-
     var zoom = d3.zoom()
         .scaleExtent([1, 4])
-        //.translateExtent([[0,0], [width-margin.left, height-margin.top]])
         .on("zoom", zoomed);
 
-    //svg1.call(zoom);
     $("#zoom").on('click', function () {
         svg1.on(".dragstart", null);
         svg1.on(".drag", null);
         svg1.on(".dragend", null);
         svg1.call(zoom);
-        var transform = d3.zoomIdentity
-            .translate(margin.left, margin.top)
-            .scale(1);
-        //dotg.call(zoom.transform, transform);
     })
+
+    //zoom function
     function zoomed() {
         level = d3.event.transform.k;
         newdata = dots.filter(function (e) {
             return e.lvl <= level;
         })
-        d3.select("output#zoomlevel").text(level);
-        d3.select("output#zoomlevel").property("value", level);
-        //console.log(level);
-        //console.log(newdata);
-        /* scatterPlot =
-             svg1.select(".dots").selectAll("circle")
-                 .data(newdata);
-                 scatterPlot
-                 .join('circle')
-                 .attr("cx", d => mx(d.x))
-                 .attr("cy", d => my(d.y))
-                 .attr("fill", d => d.clr)
-                 .attr("class", "show")
-                 .attr("id", d => d.c)
-                 .attr("r", parseInt(document.getElementsByTagName("output")[0].value))
-                 .attr('opacity', 0.5);
- 
-                 svg1.select(".dots").selectAll("circle")
-             .data(newdata)
-             .exit().remove();
- */
+        d3.select("output#zoomlevel").text(level.toFixed(2));
+        d3.select("output#zoomlevel").property("value", level.toFixed(2));
 
         for (i = 0; i < c.length; i++) {
             console.log(svg1.select(".dots").selectAll("circle[id='" + c[i] + "']"));
             updateScatter(svg1.select(".dots").selectAll("circle[id='" + c[i] + "']"), c[i]);
         }
-        
+
         svg1.select(".dots").selectAll("circle")
-            .attr("r", scaleRadius(currentPointSize/level));
-        //console.log(s);
+            .attr("r", scaleRadius(currentPointSize / level));
 
         svg1.select(".dots").attr("transform", d3.event.transform);
-        //console.log(d3.event.transform);
-        //TODO: rescaling axes
+
         svg1.select(".xAxis").call(xAxis.scale(d3.event.transform.rescaleX(mx)));
-        //.attr("transform", "translate(60," + (height + 50) + ")");
         svg1.select(".yAxis").call(yAxis.scale(d3.event.transform.rescaleY(my)));
-        //.attr("transform", "translate(10" + ",40)");
     }
 
-    //zooming ends
-    // dotg.call(tip);
-
     //lasso selection
-
     var lasso_start = function () {
         console.log('start')
         lasso.items()
@@ -270,7 +221,7 @@ function mainScatter(data) {
                 .attr("r", 5);
         }
     };
-    //console.log(circles[0]);
+
     var s = svg1.selectAll('circle');
     const lasso = d3.lasso()
         .closePathDistance(305)
@@ -285,13 +236,11 @@ function mainScatter(data) {
         svg1.on(".zoom", null);
         svg1.call(lasso);
     })
-
 }
 
-
+//update function for the main scatter plot
 function updateScatter(selection, c) {
-
-    console.log(selection);
+    //console.log(selection);
     xs = [];
     selection.each(d => xs.push(d.x));
 
@@ -308,7 +257,6 @@ function updateScatter(selection, c) {
     console.log(level);
     newdata = dots.filter(e => e.x >= x0 && e.x <= x1 && e.y >= y0 && e.y <= y1 && e.lvl <= level && e.c == c);
 
-
     var update = svg1.select(".dots").selectAll("circle[id='" + c + "']")
         .data(newdata);
 
@@ -323,10 +271,11 @@ function updateScatter(selection, c) {
         .attr('opacity', mainOpacity);
 
     update.exit().remove();
+
     console.log(newdata);
 }
 
-
+//rendering small class-specific scatter plots
 function drawScatter(origDots) {
     var width = 200;
     var height = 200;
@@ -340,7 +289,8 @@ function drawScatter(origDots) {
 
     var dotg = svg2.append('g')
         .attr("transform", "translate(" + margin.left + ", " + margin.top + ")")
-        .attr("class", "scatter");
+        .attr("class", "scatter")
+        .attr("id", origDots[0].c_name);
 
     var x = d3.scaleLinear()
         .domain([d3.min(origDots, d => d.x), d3.max(origDots, d => d.x)])
@@ -351,6 +301,21 @@ function drawScatter(origDots) {
         .range([height, 0]);
 
     console.log(x.domain()[0] + " " + x.domain()[1]);
+
+    svg2.append("foreignObject")
+    .attr("width", 50)
+    .attr("height", 50)
+    .append("xhtml:body")
+    .html("<form><input type=checkbox class=checkbox id=" + origDots[0].c_name + " checked/></form>")
+    .on("click", function(d, i){
+        console.log(svg2.select(".checkbox").node().checked);
+        if(!svg2.select(".checkbox").node().checked) {
+            svg1.selectAll("circle[id='" + svg2.attr("class") + "']").remove();
+        } else {
+            updateScatter(svg2.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg2.attr("class"));
+        }
+    });
+
     var scatterPlot = dotg.selectAll('circle')
         .data(origDots)
         .enter()
@@ -364,8 +329,7 @@ function drawScatter(origDots) {
         .attr('opacity', 0.5)
         .classed("x_selected", true)
         .classed("y_selected", true)
-        .attr("fill", d => d.clr)
-
+        .attr("fill", d => d.clr);
 
     dotg.append("text")
         .attr("x", (width / 2))
@@ -376,16 +340,12 @@ function drawScatter(origDots) {
         .style("text-decoration", "underline")
         .text(origDots[0].c_name);
 
-    //histogram
-
-
-
+    //histograms
     drawHist(origDots, svg2, "x");
     drawHist(origDots, svg2, "y");
 }
 
-
-
+//drawing histograms for the small views
 function drawHist(dots, svg, or) {
     var width = 200;
     var height = 50;
@@ -397,11 +357,10 @@ function drawHist(dots, svg, or) {
         dots.forEach(e => data.push(e.x));
     } else {
         dots.forEach(e => data.push(e.y));
-        //data = data.reverse();
     }
 
     var x = d3.scaleLinear()
-    // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+
     if (or == "x") {
         x.domain([d3.min(data), d3.max(data)])
             .range([0, width]);
@@ -411,18 +370,14 @@ function drawHist(dots, svg, or) {
             .range([0, width]);
     }
 
-
-
     // set the parameters for the histogram
     var histogram = d3.histogram()
-        //.value(data.x)   // I need to give the vector of value
-        .domain(x.domain())  // then the domain of the graphic
-        .thresholds(x.ticks(40)); // then the numbers of bins
+        .domain(x.domain())
+        .thresholds(x.ticks(40));
 
     // And apply this function to data to get the bins
     var bins = histogram(data);
 
-    // Y axis: scale and draw:
     var y = d3.scaleLinear()
         .range([height, 0])
         .domain([0, d3.max(bins, function (d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
@@ -434,7 +389,8 @@ function drawHist(dots, svg, or) {
     // append the bar rectangles to the svg element
     var bar = svg.append("g");
     if (or == "x") {
-        bar.attr("transform", "translate(50,240)");
+        bar
+            .attr("transform", "translate(50,240)");
     } else {
         bar
             .attr("transform", "translate(0,240) rotate(-90) ");
@@ -450,6 +406,7 @@ function drawHist(dots, svg, or) {
         .attr("y", d => y(d.length))
         .attr("height", d => y(0) - y(d.length))
 
+    //brushing on histograms
     const brush = d3.brushX()
         .extent([[0, 0], [width, 50]])
         .on("brush", brushed)
@@ -491,12 +448,10 @@ function drawHist(dots, svg, or) {
 
             } else {
                 var selected = svg.select("g.scatter").selectAll("circle.x_selected");
-                //var notselected = svg.select("g.scatter").selectAll("circle.not_selected");
+
                 selected.each(function (d, i) {
-                    //console.log(d.className.baseVal);
                     if (d.y >= x.invert(x0) && d.y <= x.invert(x1)) {
                         d3.select(this)
-                            //.classed("selected", true)
                             .classed("y_selected", true)
                             .attr("fill", d.clr);
                     } else {
@@ -505,24 +460,16 @@ function drawHist(dots, svg, or) {
                             .attr("fill", 'grey');
                     }
                 });
-
                 updateScatter(svg.select("g.scatter").selectAll("circle.x_selected.y_selected"), svg.attr("class"));
             }
             console.log(x.invert(x0) + " " + x.invert(x1));
-            //console.log(notselected);
             console.log(dots);
-            //updateScatter(dots, newdata, svg);
-            //notselected.attr("fill", "grey");
         }
     }
 
     function brushended() {
         if (!d3.event.selection) {
             gb.call(brush.move, defaultSelection);
-            //updateScatter(dots, dots, svg);
-            //svg.selectAll("circle")
-            //.classed("selected", true);
-
         }
     }
 }
