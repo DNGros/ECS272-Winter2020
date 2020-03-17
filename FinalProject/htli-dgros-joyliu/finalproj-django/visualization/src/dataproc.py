@@ -361,7 +361,10 @@ class ColorManager():
         for l, a, b in self.colors:
             lab = LabColor(l, a, b)
             rgb = convert_color(lab, sRGBColor)
-            colors.append(rgb.get_rgb_hex())
+            this_hex = rgb.get_rgb_hex()
+            if len(this_hex) > 7:
+                this_hex = this_hex[:7]
+            colors.append(this_hex)
         return colors
 
     
