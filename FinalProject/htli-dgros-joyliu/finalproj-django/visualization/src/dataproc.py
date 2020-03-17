@@ -68,11 +68,10 @@ def sample_data(
     zoom_level = initial_zoom_level
     num_classes = len(data)
     out_data = []
-    # added_points_dist_tracker = DistQueriablePointTracker(num_classes)
+    added_points_dist_tracker = DistQueriablePointTracker(num_classes)
     kde = PointsKDE(data)
     num_points = sum(len(cl_points) for cl_points in data)
     while not data_sampler.is_empty() and zoom_level <= max_zoom_level:
-        added_points_dist_tracker = DistQueriablePointTracker(num_classes)
         # Find w based off equation 2
         # NOTE: This isn't the exact same as the equation. Using that equation
         # seems to agressive with removing points in the sparser regions.
@@ -95,7 +94,8 @@ def sample_data(
             # Select a trial sample from the most unfilled data class
             point = data_sampler.sample_least_filled()
             # Because the distances are
-            acceptable_dists = get_closest_acceptable_dist(point, kde, w, point_radius)
+            acceptable_dists = get_closest_acceptable_dist(
+                point, kde, w, point_radius / zoom_level)
             pass_conflict = conflict_check(point, acceptable_dists, added_points_dist_tracker)
             if pass_conflict:
                 this_zoom_data[point.class_id].append(point)

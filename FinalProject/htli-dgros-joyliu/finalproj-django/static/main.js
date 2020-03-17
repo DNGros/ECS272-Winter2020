@@ -18,6 +18,7 @@ var width = 500;
 var height = 500;
 var margin = { left: 60, right: 20, top: 20, bottom: 60 };
 var defaultRadius = 0.05;
+var currentPointSize = defaultRadius;
 var mainOpacity = 1;
 //var radiusStepdown = defaultRadius / (0.1 / 2);
 
@@ -34,19 +35,24 @@ var dotg = svg1.append("g")
 console.log(svg1);
 var mx;
 var my;
+var axisDiff; // Used for making sure the points are real sized
+var level; // zoom level
 dots = [];
 origDots = [];
 
 function scaleRadius(r) {
-    let axisDif = mx(1) - mx(0);
-    console.log("SCALE RADIUS " + axisDif + " " + r);
+    //console.log("SCALE RADIUS " + axisDif + " " + r);
     return r * axisDif;
+}
+
+function setPointSizeDisplay(){
+    d3.select("output#pointsize").text(currentPointSize);
 }
 
 function mainScatter(data) {
 
     //get data
-var lvls = [0, 4,2,0,1];
+    //var lvls = [0, 4,2,0,1];
 
     for (i = 0; i < data.x.length; i++) {
         var dot = {
@@ -55,7 +61,7 @@ var lvls = [0, 4,2,0,1];
             c: data.c[i],
             c_name: data.c_name[i],
             clr: data.clr[i],
-            lvl: lvls[data.lvl[i]]
+            lvl: data.lvl[i]
         };
         dots.push(dot);
     }
@@ -81,6 +87,11 @@ var lvls = [0, 4,2,0,1];
     my = d3.scaleLinear()
         .domain(shared_domain)
         .range([height+margin.top+margin.bottom, 0]);
+    axisDif = mx(1) - mx(0);
+    level = 1.0;
+
+    setPointSizeDisplay();
+
     var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
@@ -105,11 +116,10 @@ var lvls = [0, 4,2,0,1];
         .attr('data-y', d => d.y)
         .attr("class", "show")
         .attr("id", d => d.c)
-        .attr("r", scaleRadius(defaultRadius))
+        .attr("r", scaleRadius(currentPointSize / level))
         .attr('opacity', mainOpacity)
         .attr("fill", d => d.clr);
     //dotg.call(tip);
-
     console.log(scatterPlot);
     // x axis
     var gX = svg1.append("g")
@@ -148,11 +158,10 @@ var lvls = [0, 4,2,0,1];
 
     //point size slider
 
-    d3.select("input[type=range]#pointsize").on("input", function () {
-        var size = this.value;
-        d3.select("output#pointsize").text(size);
-        dotg.selectAll("circle.show").attr("r", scaleRadius(size));
-        console.log(dotg.selectAll("circle"));
+    d3.select("#pointsize-slider").on("input", function () {
+        currentPointSize = this.value;
+        setPointSizeDisplay();
+        dotg.selectAll("circle.show").attr("r", scaleRadius(currentPointSize / level));
     });
 
     //zooming
@@ -174,7 +183,7 @@ var lvls = [0, 4,2,0,1];
         //dotg.call(zoom.transform, transform);
     })
     function zoomed() {
-        var level = d3.event.transform.k;
+        level = d3.event.transform.k;
         newdata = dots.filter(function (e) {
             return e.lvl <= level;
         })
@@ -206,7 +215,7 @@ var lvls = [0, 4,2,0,1];
         }
         
         svg1.select(".dots").selectAll("circle")
-        .attr("r", 5/level);
+            .attr("r", scaleRadius(currentPointSize/level));
         //console.log(s);
 
         svg1.select(".dots").attr("transform", d3.event.transform);
@@ -310,7 +319,7 @@ function updateScatter(selection, c) {
         .attr("cy", d => my(d.y))
         .attr("fill", d => d.clr)
         .attr("id", d => d.c)
-        .attr("r", 5 / level)
+        .attr("r", scaleRadius(0.05 / level))
         .attr('opacity', mainOpacity);
 
     update.exit().remove();
