@@ -9,7 +9,7 @@ from tqdm import tqdm
 from visualization.src.thirdparty.dynamic_array import DynamicArray
 from visualization.src.thirdparty.poission_disc_sampler import PoissonDiscSampler
 
-from colormath.color_objects import LabColor, sRGBColor
+from colormath.color_objects import LabColor, sRGBColor, XYZColor
 from colormath.color_conversions import convert_color
 
 COORD_TYPE = Union[Tuple[float, float], Tuple[float, float, float]]
@@ -357,13 +357,13 @@ class ColorManager():
 
 
     def get_colors(self):
+        print(self.colors)
         colors = []
         for l, a, b in self.colors:
             lab = LabColor(l, a, b)
             rgb = convert_color(lab, sRGBColor)
+            rgb = sRGBColor(rgb.clamped_rgb_r, rgb.clamped_rgb_g, rgb.clamped_rgb_b)
             this_hex = rgb.get_rgb_hex()
-            if len(this_hex) > 7:
-                this_hex = this_hex[:7]
             colors.append(this_hex)
         return colors
 
